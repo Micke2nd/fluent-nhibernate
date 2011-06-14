@@ -13,7 +13,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         public void GenericAsTernaryAssocationShouldSetDefaultNames()
         {
             var mapping = MappingFor<ManyToManyTarget>(class_map => class_map.HasManyToMany(x => x.GenericTernaryMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             var index = (IndexMapping)collection.Index;
             index.Columns.Count().ShouldEqual(1);
@@ -35,7 +35,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
                 class_map.HasManyToMany(x => x.GenericTernaryMapOfChildren)
                     .DictionaryKey(indexName)
                     .ManyToMany(valueName));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             var index = (IndexMapping)collection.Index;
             index.Columns.Count().ShouldEqual(1);
@@ -53,7 +53,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         {
             var mapping = MappingFor<ManyToManyTarget>(class_map =>
                 class_map.HasManyToMany<ChildObject, ChildObject>(x => x.NonGenericTernaryMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
            
             var index = (IndexMapping)collection.Index;
             index.Columns.Count().ShouldEqual(1);
@@ -76,7 +76,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
                     .DictionaryKey(indexName)
                     .ManyToMany(valueName));
 
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
             var index = (IndexMapping)collection.Index;
             index.Columns.Count().ShouldEqual(1);
             index.Columns.First().Name.ShouldEqual(indexName);
@@ -92,7 +92,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         public void EntityMapIsAMapWithAManyToManyIndex()
         {
             var mapping = MappingFor<ManyToManyTarget>(class_map => class_map.HasManyToMany(x => x.GenericTernaryMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             collection.ShouldNotBeNull();
             collection.Index.ShouldBeOfType(typeof(IndexMapping));
@@ -108,7 +108,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
                     .DictionaryKey(indexName)
                     .ManyToMany(valueName));
             
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
             
             collection.ShouldNotBeNull();
             collection.Index.ShouldBeOfType(typeof(IndexMapping));

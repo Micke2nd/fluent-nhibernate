@@ -6,5 +6,6 @@ namespace FluentNHibernate.MappingModel.Collections
     {
         void AcceptVisitor(IMappingModelVisitor visitor);
         TypeReference Type { get; set; }
+        IDefaultableEnumerable<ColumnMapping> Columns { get; }
     }
 }

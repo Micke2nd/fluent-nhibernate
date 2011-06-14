@@ -188,8 +188,17 @@ namespace FluentNHibernate.Testing.Diagnostics
                 .ShouldContain(typeof(object));
         }
 
-        class SomeClassMap : ClassMap<SomeClass> { }
-        class SomeClass {}
+        class SomeClassMap : ClassMap<SomeClass>
+        {
+            SomeClassMap()
+            {
+                Id(x => x.Id);
+            }
+        }
+        class SomeClass
+        {
+            public int Id { get; set; }
+        }
         class SomeConvention : IConvention {}
     }
 }

@@ -9,13 +9,15 @@ namespace FluentNHibernate.Conventions.Inspections
     public interface ICollectionInspector : IInspector
     {
         IKeyInspector Key { get; }
+        IIndexInspectorBase Index { get; }
+        string Sort { get; }
         string TableName { get; }
         bool IsMethodAccess { get; }
         MemberInfo Member { get; }
         IRelationshipInspector Relationship { get; }
         Cascade Cascade { get; }
         Fetch Fetch { get; }
-        OptimisticLock OptimisticLock { get; }
+        bool OptimisticLock { get; }
         bool Generic { get; }
         bool Inverse { get; }
         Access Access { get; }
@@ -32,5 +34,6 @@ namespace FluentNHibernate.Conventions.Inspections
         string Schema { get; }
         string Where { get; }
         string OrderBy { get; }
+        Collection Collection { get; }
     }
 }

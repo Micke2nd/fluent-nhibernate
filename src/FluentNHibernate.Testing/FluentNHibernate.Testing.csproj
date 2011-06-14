@@ -121,6 +121,9 @@
     <Compile Include="AutoMapping\Overrides\CompositeIdOverrides.cs" />
     <Compile Include="AutoMapping\Overrides\HibernateMappingOverrides.cs" />
     <Compile Include="AutoMapping\Overrides\ParentOverridesWithSubclasses.cs" />
+    <Compile Include="DomainModel\MemberAccessResolverTests.cs" />
+    <Compile Include="DomainModel\MemberBackingFieldTests.cs" />
+    <Compile Include="DomainModel\NamingTests.cs" />
     <Compile Include="AutoMapping\UnionSubclassConventionTests.cs" />
     <Compile Include="AutoMapping\UnionSubclassTests.cs" />
     <Compile Include="StubTypeSource.cs" />
@@ -188,7 +191,6 @@
     <Compile Include="FluentInterfaceTests\StoredProcedurePartGenerationTests.cs" />
     <Compile Include="FluentInterfaceTests\WhereTests.cs" />
     <Compile Include="MappingModel\Equality\CollectionContentEqualitySpecs.cs" />
-    <Compile Include="MappingModel\Defaults\MutableDefaultsTester.cs" />
     <Compile Include="MappingModel\Equality\MappingEqualitySpecs.cs" />
     <Compile Include="MappingModel\Output\XmlDiscriminatorWriterTester.cs" />
     <Compile Include="MappingModel\Output\XmlFilterDefinitionWriterTester.cs" />
@@ -223,14 +225,8 @@
     <Compile Include="ConventionsTests\Inspection\AnyInspectorMapsToAnyMapping.cs" />
     <Compile Include="ConventionsTests\Inspection\ComponentInspectorMapsToComponentMapping.cs" />
     <Compile Include="ConventionsTests\Inspection\CompositeIdInspectorMapsToCompositeIdMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\CollectionInspectorMapsToBagMapping.cs" />
     <Compile Include="ConventionsTests\Inspection\CompositeElementInspectorMapsToCompositeElementMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\ArrayInspectorMapsToArrayMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\BagInspectorMapsToBagMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\SetInspectorMapsToSetMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\MapInspectorMapsToMapMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\ListInspectorMapsToListMapping.cs" />
-    <Compile Include="ConventionsTests\Inspection\IndexManyToManyInspectorMapsToIndexManyToManyMapping.cs" />
+    <Compile Include="ConventionsTests\Inspection\CollectionInspectorMapsToCollectionMapping.cs" />
     <Compile Include="ConventionsTests\Inspection\IndexInspectorMapsToIndexMapping.cs" />
     <Compile Include="ConventionsTests\Inspection\ElementInspectorMapsToElementMapping.cs" />
     <Compile Include="ConventionsTests\Inspection\ManyToManyInspectorMapsToManyToManyMapping.cs" />
@@ -373,9 +369,7 @@
     <Compile Include="FluentInterfaceTests\SubclassSubPartModelGenerationTests.cs" />
     <Compile Include="FluentInterfaceTests\VersionMutablePropertyModelGenerationTests.cs" />
     <Compile Include="Infrastructure\ContainerTester.cs" />
-    <Compile Include="MappingModel\Defaults\AnyMappingDefaultsTester.cs" />
     <Compile Include="MappingModel\Defaults\ComponentMappingDefaultsTester.cs" />
-    <Compile Include="MappingModel\Defaults\CompositeIdMappingDefaultsTester.cs" />
     <Compile Include="MappingModel\Defaults\PropertyColumnDefaultsTester.cs" />
     <Compile Include="MappingModel\Output\XmlArrayWriterTester.cs" />
     <Compile Include="MappingModel\Output\XmlCompositeIdWriterTester.cs" />

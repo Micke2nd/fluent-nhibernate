@@ -120,9 +120,9 @@ namespace FluentNHibernate.Testing.ConventionsTests.ApplyingToModel
         [Test]
         public void ShouldSetOptimisticLockProperty()
         {
-            Convention(x => x.OptimisticLock.Dirty());
+            Convention(x => x.OptimisticLock());
 
-            VerifyModel(x => x.OptimisticLock.ShouldEqual("dirty"));
+            VerifyModel(x => x.OptimisticLock.ShouldEqual(true));
         }
 
         [Test]
@@ -167,12 +167,14 @@ namespace FluentNHibernate.Testing.ConventionsTests.ApplyingToModel
 
         #region Helpers
 
+#pragma warning disable 612,618
         private void Convention(Action<IArrayInstance> convention)
         {
             model.Conventions.Add(new ArrayConventionBuilder().Always(convention));
         }
+#pragma warning restore 612,618
 
-        private void VerifyModel(Action<ArrayMapping> modelVerification)
+        private void VerifyModel(Action<CollectionMapping> modelVerification)
         {
             var classMap = new ClassMap<ExampleParentClass>();
             classMap.Id(x => x.Id);
@@ -187,7 +189,7 @@ namespace FluentNHibernate.Testing.ConventionsTests.ApplyingToModel
                 .Classes.First()
                 .Collections.First();
 
-            modelVerification((ArrayMapping)modelInstance);
+            modelVerification(modelInstance);
         }
 
         #endregion

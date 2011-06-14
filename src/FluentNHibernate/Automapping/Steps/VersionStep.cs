@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using FluentNHibernate.Mapping;
 using FluentNHibernate.MappingModel;
 using FluentNHibernate.MappingModel.ClassBased;
+using FluentNHibernate.MappingModel.Collections;
 using FluentNHibernate.Utils;
 
 namespace FluentNHibernate.Automapping.Steps
 {
     public class VersionStep : IAutomappingStep
     {
-        private static readonly IList<string> ValidNames = new List<string> { "version", "timestamp" };
-        private static readonly IList<Type> ValidTypes = new List<Type> { typeof(int), typeof(long), typeof(TimeSpan), typeof(byte[]) };
         readonly IAutomappingConfiguration cfg;
 
         public VersionStep(IAutomappingConfiguration cfg)
@@ -19,7 +19,7 @@ namespace FluentNHibernate.Automapping.Steps
 
         public bool ShouldMap(Member member)
         {
-            return ValidNames.Contains(member.Name.ToLowerInvariant()) && ValidTypes.Contains(member.PropertyType);
+            return cfg.IsVersion(member);
         }
 
         public void Map(ClassMappingBase classMap, Member member)
@@ -35,8 +35,7 @@ namespace FluentNHibernate.Automapping.Steps
             version.SetDefaultValue("Type", GetDefaultType(member));
             version.AddDefaultColumn(new ColumnMapping { Name = member.Name });
 
-            if (member.IsProperty && !member.CanWrite)
-                version.Access = cfg.GetAccessStrategyForReadOnlyProperty(member).ToString();
+            SetDefaultAccess(member, version);
 
             if (IsSqlTimestamp(member))
             {
@@ -49,6 +48,21 @@ namespace FluentNHibernate.Automapping.Steps
             }
 
             ((ClassMapping)classMap).Version = version;
+        }
+
+        void SetDefaultAccess(Member member, VersionMapping mapping)
+        {
+            var resolvedAccess = MemberAccessResolver.Resolve(member);
+
+            if (resolvedAccess != Access.Property && resolvedAccess != Access.Unset)
+            {
+                // if it's a property or unset then we'll just let NH deal with it, otherwise
+                // set the access to be whatever we determined it might be
+                mapping.SetDefaultValue("Access", resolvedAccess.ToString());
+            }
+
+            if (member.IsProperty && !member.CanWrite)
+                mapping.SetDefaultValue("Access", cfg.GetAccessStrategyForReadOnlyProperty(member).ToString());
         }
 
         private bool IsSqlTimestamp(Member property)

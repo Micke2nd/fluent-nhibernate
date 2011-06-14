@@ -13,9 +13,8 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         public void AsTernaryAssocationShouldCreateIndexManyToMany()
         {
             var mapping = MappingFor<OneToManyTarget>(class_map => class_map.HasMany(x => x.EntityMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
-            collection.ShouldNotBeNull();
             collection.Index.ShouldBeOfType<IndexMapping>();
         }
 
@@ -23,7 +22,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         public void AsTernaryAssocationShouldSetIndexManyToManyClass()
         {
             var mapping = MappingFor<OneToManyTarget>(class_map => class_map.HasMany(x => x.EntityMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             collection.ShouldNotBeNull();
             collection.Index.Type.ShouldEqual(new TypeReference(typeof(SomeEntity)));
@@ -33,7 +32,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         public void AsTernaryAssocationShouldSetDefaultColumnName()
         {
             var mapping = MappingFor<OneToManyTarget>(class_map => class_map.HasMany(x => x.EntityMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             collection.ShouldNotBeNull();
             collection.Index.As<IndexMapping>()
@@ -48,7 +47,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
                 class_map.HasMany(x => x.EntityMapOfChildren)
                     .DictionaryKey(indexName));
 
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             collection.ShouldNotBeNull();
             collection.Index.As<IndexMapping>()
@@ -59,7 +58,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         public void EntityMapIsAMapWithAManyToManyIndex()
         {
             var mapping = MappingFor<OneToManyTarget>(class_map => class_map.HasManyToMany(x => x.EntityMapOfChildren));
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             collection.ShouldNotBeNull();
             collection.Index.ShouldBeOfType<IndexMapping>();
@@ -73,7 +72,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
                 class_map.HasMany(x => x.EntityMapOfChildren)
                     .DictionaryKey(indexName));
 
-            var collection = mapping.Collections.Single() as MapMapping;
+            var collection = mapping.Collections.Single();
 
             collection.ShouldNotBeNull();
             collection.Index.As<IndexMapping>()

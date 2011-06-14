@@ -9,17 +9,19 @@ namespace FluentNHibernate.Mapping
     public class DynamicComponentPart<T> : ComponentPartBase<T, DynamicComponentPart<T>>, IComponentMappingProvider
     {
         private readonly Type entity;
+        private readonly MappingProviderStore providers;
         private readonly AccessStrategyBuilder<DynamicComponentPart<T>> access;
         private readonly AttributeStore<ComponentMapping> attributes;
 
-        public DynamicComponentPart(Type entity, Member property)
-            : this(entity, property.Name, new AttributeStore())
+        public DynamicComponentPart(Type entity, Member member)
+            : this(entity, member, new AttributeStore(), new MappingProviderStore())
         {}
 
-        private DynamicComponentPart(Type entity, string propertyName, AttributeStore underlyingStore)
-            : base(underlyingStore, propertyName)
+        private DynamicComponentPart(Type entity, Member member, AttributeStore underlyingStore, MappingProviderStore providers)
+            : base(underlyingStore, member, providers)
         {
             this.entity = entity;
+            this.providers = providers;
             attributes = new AttributeStore<ComponentMapping>(underlyingStore);
             access = new AccessStrategyBuilder<DynamicComponentPart<T>>(this, value => attributes.Set(x => x.Access, value));
         }
@@ -58,7 +60,7 @@ namespace FluentNHibernate.Mapping
             var propertyMapping = new PropertyMapping();
             var builder = new PropertyBuilder(propertyMapping, typeof(T), property.ToMember());
 
-            properties.Add(new PassThroughMappingProvider(propertyMapping));
+            providers.Properties.Add(new PassThroughMappingProvider(propertyMapping));
 
             return builder;
         }

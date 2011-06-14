@@ -136,11 +136,11 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
         [Test]
         public void OptimisticLockShouldntBeOverwritten()
         {
-            Mapping(x => x.OptimisticLock.All());
+            Mapping(x => x.OptimisticLock());
 
-            Convention(x => x.OptimisticLock.Dirty());
+            Convention(x => x.Not.OptimisticLock());
 
-            VerifyModel(x => x.OptimisticLock.ShouldEqual("all"));
+            VerifyModel(x => x.OptimisticLock.ShouldEqual(true));
         }
 
         [Test]
@@ -195,10 +195,12 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
 
         #region Helpers
 
+#pragma warning disable 612,618
         private void Convention(Action<IArrayInstance> convention)
         {
             model.Conventions.Add(new ArrayConventionBuilder().Always(convention));
         }
+#pragma warning restore 612,618
 
         private void Mapping(Action<OneToManyPart<ExampleClass>> mappingDefinition)
         {
@@ -213,7 +215,7 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
             mappingType = typeof(ExampleParentClass);
         }
 
-        private void VerifyModel(Action<ArrayMapping> modelVerification)
+        private void VerifyModel(Action<CollectionMapping> modelVerification)
         {
             model.Add(mapping);
 
@@ -223,7 +225,7 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
                 .Classes.First()
                 .Collections.First();
 
-            modelVerification((ArrayMapping)modelInstance);
+            modelVerification(modelInstance);
         }
 
         #endregion

@@ -8,13 +8,20 @@ using FluentNHibernate.MappingModel.ClassBased;
 
 namespace FluentNHibernate.Automapping
 {
+#pragma warning disable 612,618,672
     public class AutoJoinedSubClassPart<T> : JoinedSubClassPart<T>, IAutoClasslike
     {
+        private readonly MappingProviderStore providers;
         private readonly IList<Member> membersMapped = new List<Member>();
 
         public AutoJoinedSubClassPart(string keyColumn)
+            : this(keyColumn, new MappingProviderStore())
+        {}
+
+        AutoJoinedSubClassPart(string keyColumn, MappingProviderStore providers)
+            : base(keyColumn, new AttributeStore(), providers)
         {
-            KeyColumn(keyColumn);
+            this.providers = providers;
         }
 
         public object GetMapping()
@@ -77,7 +84,7 @@ namespace FluentNHibernate.Automapping
 
             action(joinedclass);
 
-            subclasses[typeof(TSubclass)] = joinedclass;
+            providers.Subclasses[typeof(TSubclass)] = joinedclass;
         }
 
         public IAutoClasslike JoinedSubClass(Type type, string keyColumn)
@@ -85,7 +92,7 @@ namespace FluentNHibernate.Automapping
             var genericType = typeof(AutoJoinedSubClassPart<>).MakeGenericType(type);
             var joinedclass = (ISubclassMappingProvider)Activator.CreateInstance(genericType, keyColumn);
 
-            subclasses[type] = joinedclass;
+            providers.Subclasses[type] = joinedclass;
 
             return (IAutoClasslike)joinedclass;
         }
@@ -97,7 +104,7 @@ namespace FluentNHibernate.Automapping
 
             action(subclass);
 
-            subclasses[typeof(TSubclass)] = subclass;
+            providers.Subclasses[typeof(TSubclass)] = subclass;
         }
 
         public IAutoClasslike SubClass(Type type, string discriminatorValue)
@@ -105,7 +112,7 @@ namespace FluentNHibernate.Automapping
             var genericType = typeof(AutoSubClassPart<>).MakeGenericType(type);
             var subclass = (ISubclassMappingProvider)Activator.CreateInstance(genericType, discriminatorValue);
 
-            subclasses[type] = subclass;
+            providers.Subclasses[type] = subclass;
 
             return (IAutoClasslike)subclass;
         }
@@ -125,4 +132,5 @@ namespace FluentNHibernate.Automapping
             return membersMapped;
         }
     }
+#pragma warning restore 612,618,672
 }

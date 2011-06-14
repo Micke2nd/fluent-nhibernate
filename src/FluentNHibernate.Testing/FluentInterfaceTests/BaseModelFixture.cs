@@ -59,7 +59,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
 
         protected ModelTester<JoinedSubClassPart<T>, SubclassMapping> JoinedSubclass<T>()
         {
-            return new ModelTester<JoinedSubClassPart<T>, SubclassMapping>(() => new JoinedSubClassPart<T>(), x => ((ISubclassMappingProvider)x).GetSubclassMapping());
+            return new ModelTester<JoinedSubClassPart<T>, SubclassMapping>(() => new JoinedSubClassPart<T>("column1"), x => ((ISubclassMappingProvider)x).GetSubclassMapping());
         }
 
         protected ModelTester<SubclassMap<T>, SubclassMapping> SubclassMapForJoinedSubclass<T>()
@@ -115,6 +115,26 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
             return new ModelTester<PropertyBuilder, PropertyMapping>(() => new PropertyBuilder(mapping, typeof(T), ReflectionHelper.GetMember(property)), x => mapping);
         }
 
+        protected ModelTester<OneToManyPart<T>, CollectionMapping> OneToMany<T>(Expression<Func<OneToManyTarget, IEnumerable<T>>> property)
+        {
+            return new ModelTester<OneToManyPart<T>, CollectionMapping>(() => new OneToManyPart<T>(typeof(OneToManyTarget), ReflectionHelper.GetMember(property)), x => ((ICollectionMappingProvider)x).GetCollectionMapping());
+        }
+
+        protected ModelTester<ManyToManyPart<T>, CollectionMapping> ManyToMany<T>(Expression<Func<ManyToManyTarget, IList<T>>> property)
+        {
+            return new ModelTester<ManyToManyPart<T>, CollectionMapping>(() => new ManyToManyPart<T>(typeof(ManyToManyTarget), ReflectionHelper.GetMember(property)), x => ((ICollectionMappingProvider)x).GetCollectionMapping());
+        }
+
+        protected ModelTester<ManyToManyPart<IDictionary>, CollectionMapping> ManyToMany(Expression<Func<ManyToManyTarget, IDictionary>> property)
+        {
+            return new ModelTester<ManyToManyPart<IDictionary>, CollectionMapping>(() => new ManyToManyPart<IDictionary>(typeof(ManyToManyTarget), ReflectionHelper.GetMember(property)), x => ((ICollectionMappingProvider)x).GetCollectionMapping());
+        }
+
+        protected ModelTester<ManyToManyPart<IDictionary<TIndex, TValue>>, CollectionMapping> ManyToMany<TIndex, TValue>(Expression<Func<ManyToManyTarget, IDictionary<TIndex, TValue>>> property)
+        {
+            return new ModelTester<ManyToManyPart<IDictionary<TIndex, TValue>>, CollectionMapping>(() => new ManyToManyPart<IDictionary<TIndex, TValue>>(typeof(ManyToManyTarget), ReflectionHelper.GetMember(property)), x => ((ICollectionMappingProvider)x).GetCollectionMapping());
+        }
+
         protected ModelTester<ManyToOneBuilder<PropertyReferenceTarget>, ManyToOneMapping> ManyToOne()
         {
             var mapping = new ManyToOneMapping();
@@ -144,7 +164,9 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
 
         protected ModelTester<StoredProcedurePart, StoredProcedureMapping> StoredProcedure()
         {
+#pragma warning disable 612,618
             return new ModelTester<StoredProcedurePart, StoredProcedureMapping>(() => new StoredProcedurePart(null, null), x => x.GetStoredProcedureMapping());
+#pragma warning restore 612,618
         }
 
         protected ModelTester<NaturalIdPart<T>, NaturalIdMapping> NaturalId<T>()

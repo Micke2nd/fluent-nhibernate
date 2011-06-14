@@ -30,10 +30,7 @@ namespace FluentNHibernate.Automapping
 
         public virtual Access GetAccessStrategyForReadOnlyProperty(Member member)
         {
-            if (member.IsAutoProperty)
-                return Access.BackField;
-
-            return Access.ReadOnlyPropertyThroughCamelCaseField();
+            return MemberAccessResolver.Resolve(member);
         }
 
         public virtual Type GetParentSideForManyToMany(Type left, Type right)
@@ -82,13 +79,21 @@ namespace FluentNHibernate.Automapping
             return "Value";
         }
 
+        public virtual bool IsVersion(Member member)
+        {
+            var validNames = new List<string> { "version", "timestamp" };
+            var validTypes = new List<Type> { typeof(int), typeof(long), typeof(TimeSpan), typeof(byte[]) };
+
+            return validNames.Contains(member.Name.ToLowerInvariant()) && validTypes.Contains(member.PropertyType);
+        }
+
         public virtual IEnumerable<IAutomappingStep> GetMappingSteps(AutoMapper mapper, IConventionFinder conventionFinder)
         {
             return new IAutomappingStep[]
             {
                 new IdentityStep(this),
                 new VersionStep(this),
-                new ComponentStep(this, mapper),
+                new ComponentStep(this),
                 new PropertyStep(conventionFinder, this),
                 new HasManyToManyStep(this),
                 new ReferenceStep(this),

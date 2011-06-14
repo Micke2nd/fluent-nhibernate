@@ -1,14 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Xml;
 using FluentNHibernate.Mapping.Builders;
 using FluentNHibernate.MappingModel;
 using FluentNHibernate.MappingModel.Collections;
 using FluentNHibernate.Utils;
-using NHibernate.Persister.Entity;
 
 namespace FluentNHibernate.Mapping
 {
@@ -173,7 +168,7 @@ namespace FluentNHibernate.Mapping
         /// <param name="name">The filter's name</param>
         public ManyToManyPart<TChild> ApplyChildFilter(string name)
         {
-            return this.ApplyChildFilter(name, null);
+            return ApplyChildFilter(name, null);
         }
 
         /// <overloads>
@@ -213,13 +208,13 @@ namespace FluentNHibernate.Mapping
             return this;
         }
 
-        protected override ICollectionMapping GetCollectionMapping()
+        protected override CollectionMapping GetCollectionMapping()
         {
             var collection = base.GetCollectionMapping();
 
             // HACK: Index only on list and map - shouldn't have to do this!
-            if (indexMapping != null && collection is IIndexedCollectionMapping)
-                ((IIndexedCollectionMapping)collection).Index = indexMapping;
+            if (indexMapping != null)
+                collection.Index = indexMapping;
 
             return collection;
         }

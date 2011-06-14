@@ -255,12 +255,9 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         [Test]
         public void OptimisticLockShouldSetModelOptimisticLockToValue()
         {
-            var mapping = MappingFor<OneToManyTarget>(class_map =>
-                class_map.HasMany(x => x.BagOfChildren)
-                    .OptimisticLock.All());
-
-            mapping.Collections.Single()
-                .OptimisticLock.ShouldEqual("all");
+            OneToMany(x => x.BagOfChildren)
+                .Mapping(m => m.OptimisticLock())
+                .ModelShouldMatch(x => x.OptimisticLock.ShouldEqual(true));
         }
 
         [Test]

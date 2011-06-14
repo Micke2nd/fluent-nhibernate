@@ -26,6 +26,18 @@ namespace FluentNHibernate.Mapping.Builders
             mapping.Name = member.Name;
             mapping.SetDefaultValue(x => x.Class, new TypeReference(typeof(TOther)));
             mapping.AddDefaultColumn(CreateColumn(member.Name + "_id"));
+
+            SetDefaultAccess(member);
+        }
+
+        void SetDefaultAccess(Member member)
+        {
+            var resolvedAccess = MemberAccessResolver.Resolve(member);
+
+            if (resolvedAccess == Mapping.Access.Property || resolvedAccess == Mapping.Access.Unset)
+                return; // property is the default so we don't need to specify it
+
+            mapping.SetDefaultValue(x => x.Access, resolvedAccess.ToString());
         }
 
         /// <summary>

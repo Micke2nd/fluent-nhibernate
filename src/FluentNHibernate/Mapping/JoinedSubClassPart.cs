@@ -10,30 +10,35 @@ namespace FluentNHibernate.Mapping
 {
     public class JoinedSubClassPart<TSubclass> : ClasslikeMapBase<TSubclass>, ISubclassMappingProvider
     {
+        readonly MappingProviderStore providers;
         private readonly List<SubclassMapping> subclassMappings = new List<SubclassMapping>();
+        readonly ColumnMappingCollection<JoinedSubClassPart<TSubclass>> columns;
         private readonly AttributeStore<SubclassMapping> attributes;
+        readonly AttributeStore sharedColumnAttributes = new AttributeStore();
         private bool nextBool = true;
         KeyMapping keyMapping;
 
-        public JoinedSubClassPart()
-            : this(new AttributeStore())
+        public JoinedSubClassPart(string keyColumn)
+            : this(keyColumn, new AttributeStore(), new MappingProviderStore())
         {}
 
-        public JoinedSubClassPart(AttributeStore underlyingStore)
+        protected JoinedSubClassPart(string keyColumn, AttributeStore underlyingStore, MappingProviderStore providers)
+            : base(providers)
         {
+            this.providers = providers;
             attributes = new AttributeStore<SubclassMapping>(underlyingStore);
             keyMapping = new KeyMapping { ContainingEntityType = typeof(TSubclass) };
+            columns = new ColumnMappingCollection<JoinedSubClassPart<TSubclass>>(this, keyMapping, sharedColumnAttributes);
+            columns.Add(keyColumn);
         }
 
         public virtual void JoinedSubClass<TNextSubclass>(string keyColumn, Action<JoinedSubClassPart<TNextSubclass>> action)
         {
-            var subclass = new JoinedSubClassPart<TNextSubclass>();
-
-            subclass.KeyColumn(keyColumn);
+            var subclass = new JoinedSubClassPart<TNextSubclass>(keyColumn);
 
             action(subclass);
 
-            subclasses[typeof(TNextSubclass)] = subclass;
+            providers.Subclasses[typeof(TNextSubclass)] = subclass;
 
             subclassMappings.Add(((ISubclassMappingProvider)subclass).GetSubclassMapping());
         }
@@ -162,22 +167,22 @@ namespace FluentNHibernate.Mapping
             mapping.Name = typeof(TSubclass).AssemblyQualifiedName;
             mapping.Type = typeof(TSubclass);
 
-            foreach (var property in properties)
+            foreach (var property in providers.Properties)
                 mapping.AddProperty(property.GetPropertyMapping());
 
-            foreach (var component in components)
+            foreach (var component in providers.Components)
                 mapping.AddComponent(component.GetComponentMapping());
 
-            foreach (var oneToOne in oneToOnes)
+            foreach (var oneToOne in providers.OneToOnes)
                 mapping.AddOneToOne(oneToOne.GetOneToOneMapping());
 
-            foreach (var collection in collections)
+            foreach (var collection in providers.Collections)
                 mapping.AddCollection(collection.GetCollectionMapping());
 
-            foreach (var reference in references)
+            foreach (var reference in providers.References)
                 mapping.AddReference(reference.GetManyToOneMapping());
 
-            foreach (var any in anys)
+            foreach (var any in providers.Anys)
                 mapping.AddAny(any.GetAnyMapping());
 
             return mapping;

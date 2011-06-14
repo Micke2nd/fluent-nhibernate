@@ -21,9 +21,9 @@ namespace FluentNHibernate.Mapping
             return (ClassMapping)mapping;
         }
 
-        public ICollectionMapping GetCollectionMapping()
+        public CollectionMapping GetCollectionMapping()
         {
-            return (ICollectionMapping)mapping;
+            return (CollectionMapping)mapping;
         }
 
         public ManyToOneMapping GetManyToOneMapping()

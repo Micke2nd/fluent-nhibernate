@@ -9,18 +9,32 @@ namespace FluentNHibernate.Cfg
     /// </summary>
     public class MappingConfiguration
     {
-        private bool mergeMappings;
-        IDiagnosticLogger logger;
+        bool mergeMappings;
+        readonly IDiagnosticLogger logger;
+        PersistenceModel model;
+
+        public MappingConfiguration()
+            : this(new NullDiagnosticsLogger())
+        {}
 
         public MappingConfiguration(IDiagnosticLogger logger)
         {
             this.logger = logger;
 
             FluentMappings = new FluentMappingsContainer();
-            FluentMappings.PersistenceModel.SetLogger(logger);
+            //FluentMappings.PersistenceModel.SetLogger(logger);
 
             AutoMappings = new AutoMappingsContainer();
             HbmMappings = new HbmMappingsContainer();
+
+            UsePersistenceModel(new PersistenceModel());
+            model.SetLogger(logger);
+        }
+
+        public MappingConfiguration UsePersistenceModel(PersistenceModel persistenceModel)
+        {
+            model = persistenceModel;
+            return this;
         }
 
         /// <summary>
@@ -63,15 +77,17 @@ namespace FluentNHibernate.Cfg
 
             if (mergeMappings)
             {
-                foreach (var model in AutoMappings)
-                    model.MergeMappings = true;
+                foreach (var autoModel in AutoMappings)
+                    autoModel.MergeMappings = true;
 
-                FluentMappings.PersistenceModel.MergeMappings = true;
+                model.MergeMappings = true;
             }
 
             HbmMappings.Apply(cfg);
-            FluentMappings.Apply(cfg);
-            AutoMappings.Apply(cfg);
+            FluentMappings.Apply(model);
+            AutoMappings.Apply(cfg, model);
+
+            model.Configure(cfg);
         }
 
         public MappingConfiguration MergeMappings()

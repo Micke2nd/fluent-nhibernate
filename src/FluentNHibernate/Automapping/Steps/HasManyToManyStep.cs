@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using FluentNHibernate.Mapping;
 using FluentNHibernate.MappingModel;
 using FluentNHibernate.MappingModel.ClassBased;
 using FluentNHibernate.MappingModel.Collections;
@@ -44,15 +45,14 @@ namespace FluentNHibernate.Automapping.Steps
                 .FirstOrDefault();
         }
 
-        private ICollectionMapping GetCollection(Member property)
+        static CollectionMapping GetCollection(Member property)
         {
-            if (property.PropertyType.FullName.Contains("ISet"))
-                return new SetMapping();
+            var collectionType = CollectionTypeResolver.Resolve(property);
 
-            return new BagMapping();
+            return CollectionMapping.For(collectionType);
         }
 
-        private void ConfigureModel(Member member, ICollectionMapping mapping, ClassMappingBase classMap, Type parentSide)
+        private void ConfigureModel(Member member, CollectionMapping mapping, ClassMappingBase classMap, Type parentSide)
         {
             // TODO: Make the child type safer
             mapping.SetDefaultValue(x => x.Name, member.Name);
@@ -61,13 +61,26 @@ namespace FluentNHibernate.Automapping.Steps
             mapping.ChildType = member.PropertyType.GetGenericArguments()[0];
             mapping.Member = member;
 
-            if (member.IsProperty && !member.CanWrite)
-                mapping.Access = cfg.GetAccessStrategyForReadOnlyProperty(member).ToString();
-
+            SetDefaultAccess(member, mapping);
             SetKey(member, classMap, mapping);
 
             if (parentSide != member.DeclaringType)
                 mapping.Inverse = true;
+        }
+
+        void SetDefaultAccess(Member member, CollectionMapping mapping)
+        {
+            var resolvedAccess = MemberAccessResolver.Resolve(member);
+
+            if (resolvedAccess != Access.Property && resolvedAccess != Access.Unset)
+            {
+                // if it's a property or unset then we'll just let NH deal with it, otherwise
+                // set the access to be whatever we determined it might be
+                mapping.SetDefaultValue(x => x.Access, resolvedAccess.ToString());
+            }
+
+            if (member.IsProperty && !member.CanWrite)
+                mapping.SetDefaultValue(x => x.Access, cfg.GetAccessStrategyForReadOnlyProperty(member).ToString());
         }
 
         private ICollectionRelationshipMapping CreateManyToMany(Member property, Type child, Type parent)
@@ -83,7 +96,7 @@ namespace FluentNHibernate.Automapping.Steps
             return mapping;
         }
 
-        private void SetKey(Member property, ClassMappingBase classMap, ICollectionMapping mapping)
+        private void SetKey(Member property, ClassMappingBase classMap, CollectionMapping mapping)
         {
             var columnName = property.DeclaringType.Name + "_id";
             var key = new KeyMapping();

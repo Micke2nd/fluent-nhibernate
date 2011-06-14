@@ -227,25 +227,8 @@ namespace FluentNHibernate.Testing.ConventionsTests
             })
                 .Collections.First();
 
-            ((ArrayMapping)collection).Index
-                .As<IndexMapping>().Columns.First().Name.ShouldEqual("test");
-        }
-
-        [Test]
-        public void ShouldApplyIIndexManyToManyConvention()
-        {
-            var collection = TestConvention(new IndexManyToManyConvention(), () =>
-            {
-                var map = new ClassMap<Target>();
-
-                map.Id(x => x.Id);
-                map.HasManyToMany(x => x.EntityDictionary);
-
-                return map;
-            })
-                .Collections.First();
-
-            ((IndexMapping)((MapMapping)collection).Index).ForeignKey.ShouldEqual("fk");
+            collection.Index
+                .Columns.First().Name.ShouldEqual("test");
         }
 
         [Test]
@@ -441,6 +424,7 @@ namespace FluentNHibernate.Testing.ConventionsTests
 
         #region conventions
 
+#pragma warning disable 612,618
         private class ArrayConvention : IArrayConvention
         {
             public void Apply(IArrayInstance instance)
@@ -537,14 +521,6 @@ namespace FluentNHibernate.Testing.ConventionsTests
             }
         }
 
-        class IndexManyToManyConvention : IIndexManyToManyConvention
-        {
-            public void Apply(IIndexManyToManyInstance instance)
-            {
-                instance.ForeignKey("fk");
-            }
-        }
-
         class JoinConvention : IJoinConvention
         {
             public void Apply(IJoinInstance instance)
@@ -629,6 +605,8 @@ namespace FluentNHibernate.Testing.ConventionsTests
                 instance.Not.DefaultLazy();
             }
         }
+
+#pragma warning restore 612,618
 
         private class OtherObjectUserType : IUserType
         {

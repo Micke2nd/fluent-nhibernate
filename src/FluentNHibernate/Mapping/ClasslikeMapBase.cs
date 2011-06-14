@@ -13,15 +13,12 @@ namespace FluentNHibernate.Mapping
 {
     public abstract class ClasslikeMapBase<T>
     {
-        protected readonly IList<IPropertyMappingProvider> properties = new List<IPropertyMappingProvider>();
-        protected readonly IList<IComponentMappingProvider> components = new List<IComponentMappingProvider>();
-        protected readonly IList<IOneToOneMappingProvider> oneToOnes = new List<IOneToOneMappingProvider>();
-        protected readonly Dictionary<Type, ISubclassMappingProvider> subclasses = new Dictionary<Type, ISubclassMappingProvider>();
-        protected readonly IList<ICollectionMappingProvider> collections = new List<ICollectionMappingProvider>();
-        protected readonly IList<IManyToOneMappingProvider> references = new List<IManyToOneMappingProvider>();
-        protected readonly IList<IAnyMappingProvider> anys = new List<IAnyMappingProvider>();
-        protected readonly IList<IFilterMappingProvider> filters = new List<IFilterMappingProvider>();
-        protected readonly IList<IStoredProcedureMappingProvider> storedProcedures = new List<IStoredProcedureMappingProvider>();
+        readonly MappingProviderStore providers;
+
+        protected ClasslikeMapBase(MappingProviderStore providers)
+        {
+            this.providers = providers;
+        }
 
         /// <summary>
         /// Create a property mapping.
@@ -45,9 +42,12 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public PropertyBuilder Map(Expression<Func<T, object>> memberExpression, string columnName)
         {
+#pragma warning disable 612,618
             return Map(memberExpression.ToMember(), columnName);
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual PropertyBuilder Map(Member property, string columnName)
         {
             var propertyMapping = new PropertyMapping();
@@ -56,7 +56,7 @@ namespace FluentNHibernate.Mapping
             if (!string.IsNullOrEmpty(columnName))
                 builder.Column(columnName);
 
-            properties.Add(new PassThroughMappingProvider(propertyMapping));
+            providers.Properties.Add(new PassThroughMappingProvider(propertyMapping));
 
             return builder;
         }
@@ -87,7 +87,9 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public ManyToOneBuilder<TOther> References<TOther>(Expression<Func<T, TOther>> memberExpression, string columnName)
         {
+#pragma warning disable 612,618
             return References<TOther>(memberExpression.ToMember(), columnName);
+#pragma warning restore 612,618
         }
 
         /// <summary>
@@ -116,9 +118,12 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public ManyToOneBuilder<TOther> References<TOther>(Expression<Func<T, object>> memberExpression, string columnName)
         {
+#pragma warning disable 612,618
             return References<TOther>(memberExpression.ToMember(), columnName);
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual ManyToOneBuilder<TOther> References<TOther>(Member property, string columnName)
         {
             var manyToOneMapping = new ManyToOneMapping();
@@ -127,7 +132,7 @@ namespace FluentNHibernate.Mapping
             if (columnName != null)
                 part.Column(columnName);
 
-            references.Add(new PassThroughMappingProvider(manyToOneMapping));
+            providers.References.Add(new PassThroughMappingProvider(manyToOneMapping));
 
             return part;
         }
@@ -139,14 +144,17 @@ namespace FluentNHibernate.Mapping
         /// <param name="memberExpression">Property</param>
         public AnyPart<TOther> ReferencesAny<TOther>(Expression<Func<T, TOther>> memberExpression)
         {
+#pragma warning disable 612,618
             return ReferencesAny<TOther>(memberExpression.ToMember());
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual AnyPart<TOther> ReferencesAny<TOther>(Member property)
         {
             var part = new AnyPart<TOther>(typeof(T), property);
 
-            anys.Add(part);
+            providers.Anys.Add(part);
 
             return part;
         }
@@ -164,7 +172,9 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public OneToOnePart<TOther> HasOne<TOther>(Expression<Func<T, Object>> memberExpression)
         {
+#pragma warning disable 612,618
             return HasOne<TOther>(memberExpression.ToMember());
+#pragma warning restore 612,618
         }
 
         /// <summary>
@@ -180,14 +190,17 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public OneToOnePart<TOther> HasOne<TOther>(Expression<Func<T, TOther>> memberExpression)
         {
+#pragma warning disable 612,618
             return HasOne<TOther>(memberExpression.ToMember());
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual OneToOnePart<TOther> HasOne<TOther>(Member property)
         {
             var part = new OneToOnePart<TOther>(EntityType, property);
 
-            oneToOnes.Add(part);
+            providers.OneToOnes.Add(part);
 
             return part;
         }
@@ -206,16 +219,19 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public DynamicComponentPart<IDictionary> DynamicComponent(Expression<Func<T, IDictionary>> memberExpression, Action<DynamicComponentPart<IDictionary>> dynamicComponentAction)
         {
+#pragma warning disable 612,618
             return DynamicComponent(memberExpression.ToMember(), dynamicComponentAction);
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected DynamicComponentPart<IDictionary> DynamicComponent(Member property, Action<DynamicComponentPart<IDictionary>> dynamicComponentAction)
         {
             var part = new DynamicComponentPart<IDictionary>(typeof(T), property);
             
             dynamicComponentAction(part);
 
-            components.Add(part);
+            providers.Components.Add(part);
 
             return part;
         }
@@ -232,7 +248,7 @@ namespace FluentNHibernate.Mapping
         {
             var part = new ReferenceComponentPart<TComponent>(member.ToMember(), typeof(T));
 
-            components.Add(part);
+            providers.Components.Add(part);
 
             return part;
         }
@@ -252,7 +268,9 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public ComponentPart<TComponent> Component<TComponent>(Expression<Func<T, TComponent>> expression, Action<ComponentPart<TComponent>> action)
         {
+#pragma warning disable 612,618
             return Component(expression.ToMember(), action);
+#pragma warning restore 612,618
         }
 
         /// <summary>
@@ -270,16 +288,19 @@ namespace FluentNHibernate.Mapping
         /// </example>
         public ComponentPart<TComponent> Component<TComponent>(Expression<Func<T, object>> expression, Action<ComponentPart<TComponent>> action)
         {
+#pragma warning disable 612,618
             return Component(expression.ToMember(), action);
+#pragma warning restore 612,618
         }
-        
+
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual ComponentPart<TComponent> Component<TComponent>(Member property, Action<ComponentPart<TComponent>> action)
         {
             var part = new ComponentPart<TComponent>(typeof(T), property);
 
             action(part);
 
-            components.Add(part);
+            providers.Components.Add(part);
 
             return part;
         }
@@ -294,21 +315,24 @@ namespace FluentNHibernate.Mapping
         /// </remarks>        
         public void Component(IComponentMappingProvider componentProvider)
         {
-            components.Add(componentProvider);
+            providers.Components.Add(componentProvider);
         }
 
         #region HasMany
 
         private OneToManyPart<TChild> MapHasMany<TChild, TReturn>(Expression<Func<T, TReturn>> expression)
         {
+#pragma warning disable 612,618
             return HasMany<TChild>(expression.ToMember());
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual OneToManyPart<TChild> HasMany<TChild>(Member member)
         {
             var part = new OneToManyPart<TChild>(EntityType, member);
 
-            collections.Add(part);
+            providers.Collections.Add(part);
 
             return part;
         }
@@ -399,14 +423,17 @@ namespace FluentNHibernate.Mapping
 
         private ManyToManyPart<TChild> MapHasManyToMany<TChild, TReturn>(Expression<Func<T, TReturn>> expression)
         {
+#pragma warning disable 612,618
             return HasManyToMany<TChild>(expression.ToMember());
+#pragma warning restore 612,618
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual ManyToManyPart<TChild> HasManyToMany<TChild>(Member property)
         {
             var part = new ManyToManyPart<TChild>(EntityType, property);
 
-            collections.Add(part);
+            providers.Collections.Add(part);
 
             return part;
         }
@@ -500,12 +527,10 @@ namespace FluentNHibernate.Mapping
 
         MapBuilder<TKey, TValue> HasManyMap<TKey, TValue>(Member member)
         {
-            var mapping = new MapMapping
-            {
-                ContainingEntityType = typeof(T)
-            };
+            var mapping = CollectionMapping.Map();
+            mapping.ContainingEntityType = typeof(T);
 
-            collections.Add(new PassThroughMappingProvider(mapping));
+            providers.Collections.Add(new PassThroughMappingProvider(mapping));
 
             return new MapBuilder<TKey, TValue>(mapping, member);
         }
@@ -549,20 +574,23 @@ namespace FluentNHibernate.Mapping
         protected StoredProcedurePart StoredProcedure(string element, string innerText)
         {
             var part = new StoredProcedurePart(element, innerText);
-            storedProcedures.Add(part);
+            providers.StoredProcedures.Add(part);
             return part;
         }
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual IEnumerable<IPropertyMappingProvider> Properties
 		{
-			get { return properties; }
+            get { return providers.Properties; }
 		}
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         protected virtual IEnumerable<IComponentMappingProvider> Components
 		{
-			get { return components; }
+            get { return providers.Components; }
 		}
 
+        [Obsolete("Do not call this method. Implementation detail mistakenly made public. Will be made private in next version.")]
         public Type EntityType
         {
             get { return typeof(T); }

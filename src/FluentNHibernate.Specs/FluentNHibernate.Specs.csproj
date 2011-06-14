@@ -42,6 +42,9 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <NoWarn>169</NoWarn>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -85,16 +88,26 @@
     <Compile Include="Automapping\AutomappingSpecs.ElementCollections.cs" />
     <Compile Include="Automapping\AutoPersistenceModelSpecs.cs" />
     <Compile Include="Automapping\AutoPersistenceModelSpecs.Conventions.cs" />
+    <Compile Include="Automapping\AutomappingSpecs.Version.cs" />
     <Compile Include="Automapping\Fixtures\AutomappingSpecExtensions.cs" />
     <Compile Include="Automapping\Fixtures\EntityWithStaticProperties.cs" />
     <Compile Include="Automapping\Fixtures\EntityUsingPrivateFields.cs" />
     <Compile Include="Automapping\Fixtures\FakeMembers.cs" />
     <Compile Include="Automapping\Fixtures\Overrides\EntityTableOverride.cs" />
     <Compile Include="Automapping\Fixtures\StubTypeSource.cs" />
+    <Compile Include="Automapping\Fixtures\VersionedEntity.cs" />
     <Compile Include="Automapping\PrivateAutomapperSpecs.cs" />
     <Compile Include="Automapping\PrivateFieldsSpecs.cs" />
+    <Compile Include="Conventions\ApplyFilterSpecs.cs" />
+    <Compile Include="Conventions\CollectionTypeChangeSpecs.cs" />
     <Compile Include="Conventions\ConventionBuilderSpecs.cs" />
     <Compile Include="Conventions\Fixtures\Child.cs" />
+    <Compile Include="Conventions\Fixtures\CollectionTarget.cs" />
+    <Compile Include="Conventions\Fixtures\CollectionConvention.cs" />
+    <Compile Include="Conventions\Fixtures\FilterClassConvention.cs" />
+    <Compile Include="Conventions\Fixtures\FilterTarget.cs" />
+    <Compile Include="Conventions\Fixtures\FormulaConvention.cs" />
+    <Compile Include="Conventions\Fixtures\FormulaTarget.cs" />
     <Compile Include="Conventions\Fixtures\SetCollectionEntity.cs" />
     <Compile Include="Conventions\Fixtures\SetCollectionEntityMap.cs" />
     <Compile Include="Conventions\Fixtures\SetCompositeElementCollectionEntity.cs" />
@@ -105,6 +118,7 @@
     <Compile Include="Conventions\Fixtures\TwoPropertyEntityMap.cs" />
     <Compile Include="Conventions\Fixtures\Value.cs" />
     <Compile Include="Conventions\ForeignKeyConventionSpecs.cs" />
+    <Compile Include="Conventions\FormulaConventionSpecs.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FluentInterface\ClasslikeBehaviors.cs" />
     <Compile Include="FluentInterface\ClassMapSpecs\ClassMapSpecs.Cache.cs" />
@@ -175,6 +189,23 @@
     <Compile Include="FluentInterface\Fixtures\EntityBase.cs" />
     <Compile Include="FluentInterface\Fixtures\Blog.cs" />
     <Compile Include="FluentInterface\MapSpecs.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

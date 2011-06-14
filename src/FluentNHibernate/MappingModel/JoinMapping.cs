@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Reflection;
-using FluentNHibernate.Mapping;
 using FluentNHibernate.MappingModel.ClassBased;
+using FluentNHibernate.MappingModel.Collections;
 using FluentNHibernate.Visitors;
 
 namespace FluentNHibernate.MappingModel
@@ -51,6 +50,11 @@ namespace FluentNHibernate.MappingModel
             get { return mappedMembers.Anys; }
         }
 
+        public IEnumerable<CollectionMapping> Collections
+        {
+            get { return mappedMembers.Collections; }
+        }
+
         public void AddProperty(PropertyMapping property)
         {
             mappedMembers.AddProperty(property);
@@ -69,6 +73,11 @@ namespace FluentNHibernate.MappingModel
         public void AddAny(AnyMapping mapping)
         {
             mappedMembers.AddAny(mapping);
+        }
+
+        public void AddCollection(CollectionMapping collectionMapping)
+        {
+            mappedMembers.AddCollection(collectionMapping);
         }
 
         public string TableName

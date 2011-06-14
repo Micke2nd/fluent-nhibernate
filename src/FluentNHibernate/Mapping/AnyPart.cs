@@ -18,7 +18,7 @@ namespace FluentNHibernate.Mapping
     {
         private readonly AttributeStore<AnyMapping> attributes = new AttributeStore<AnyMapping>();
         private readonly Type entity;
-        private readonly Member property;
+        private readonly Member member;
         private readonly AccessStrategyBuilder<AnyPart<T>> access;
         private readonly CascadeExpression<AnyPart<T>> cascade;
         private readonly IList<string> typeColumns = new List<string>();
@@ -26,12 +26,24 @@ namespace FluentNHibernate.Mapping
         private readonly IList<MetaValueMapping> metaValues = new List<MetaValueMapping>();
         private bool nextBool = true;
 
-        public AnyPart(Type entity, Member property)
+        public AnyPart(Type entity, Member member)
         {
             this.entity = entity;
-            this.property = property;
+            this.member = member;
             access = new AccessStrategyBuilder<AnyPart<T>>(this, value => attributes.Set(x => x.Access, value));
             cascade = new CascadeExpression<AnyPart<T>>(this, value => attributes.Set(x => x.Cascade, value));
+
+            SetDefaultAccess();
+        }
+
+        void SetDefaultAccess()
+        {
+            var resolvedAccess = MemberAccessResolver.Resolve(member);
+
+            if (resolvedAccess == Mapping.Access.Property || resolvedAccess == Mapping.Access.Unset)
+                return; // property is the default so we don't need to specify it
+
+            attributes.SetDefault(x => x.Access, resolvedAccess.ToString());
         }
 
         /// <summary>
@@ -154,12 +166,12 @@ namespace FluentNHibernate.Mapping
             mapping.ContainingEntityType = entity;
 
             if (!mapping.IsSpecified("Name"))
-                mapping.Name = property.Name;
+                mapping.Name = member.Name;
 
             metaValues.Each(mapping.AddMetaValue);
             if (!mapping.IsSpecified("MetaType"))
             {
-                mapping.MetaType = metaValues.Count() > 0 ? new TypeReference(typeof(string)) : new TypeReference(property.PropertyType);
+                mapping.MetaType = metaValues.Count() > 0 ? new TypeReference(typeof(string)) : new TypeReference(member.PropertyType);
             }
 
             foreach (var column in typeColumns)

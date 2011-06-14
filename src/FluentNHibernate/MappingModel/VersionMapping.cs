@@ -1,5 +1,4 @@
 using System;
-using System.Linq.Expressions;
 using FluentNHibernate.Utils;
 using FluentNHibernate.Visitors;
 
@@ -20,7 +19,7 @@ namespace FluentNHibernate.MappingModel
         {
             visitor.ProcessVersion(this);
 
-            columns.Each(visitor.Visit);
+            Columns.Each(visitor.Visit);
         }
 
         public string Name

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using FluentNHibernate.Cfg.Db;
 using FluentNHibernate.Diagnostics;
 using NHibernate;
+using NHibernate.Bytecode;
 using NHibernate.Cfg;
+using NHibEnvironment = NHibernate.Cfg.Environment;
 
 namespace FluentNHibernate.Cfg
 {
@@ -12,25 +14,34 @@ namespace FluentNHibernate.Cfg
     /// </summary>
     public class FluentConfiguration
     {
-        private const string ExceptionMessage = "An invalid or incomplete configuration was used while creating a SessionFactory. Check PotentialReasons collection, and InnerException for more detail.";
-        private const string ExceptionDatabaseMessage = "Database was not configured through Database method.";
-        private const string ExceptionMappingMessage = "No mappings were configured through the Mappings method.";
+        const string ExceptionMessage = "An invalid or incomplete configuration was used while creating a SessionFactory. Check PotentialReasons collection, and InnerException for more detail.";
+        const string ExceptionDatabaseMessage = "Database was not configured through Database method.";
+        const string ExceptionMappingMessage = "No mappings were configured through the Mappings method.";
 
-        private readonly Configuration cfg;
-        private bool dbSet;
-        private bool mappingsSet;
         private readonly IList<Action<Configuration>> configAlterations = new List<Action<Configuration>>();
         readonly IDiagnosticMessageDespatcher despatcher = new DefaultDiagnosticMessageDespatcher();
+        const string CollectionTypeFactoryClassKey = NHibEnvironment.CollectionTypeFactoryClass;
+        const string ProxyFactoryFactoryClassKey = NHibEnvironment.ProxyFactoryFactoryClass;
+        const string DefaultProxyFactoryFactoryClassName = "NHibernate.ByteCode.Castle.ProxyFactoryFactory, NHibernate.ByteCode.Castle";
+        const string CurrentSessionContextClassKey = NHibEnvironment.CurrentSessionContextClass;
+
+        readonly Configuration cfg;
+        readonly List<Action<MappingConfiguration>> mappingsBuilders = new List<Action<MappingConfiguration>>();
+
+        bool dbSet;
+        bool mappingsSet;
+        
         IDiagnosticLogger logger = new NullDiagnosticsLogger();
-        Action<MappingConfiguration> mappingsBuilder;
+        readonly CacheSettingsBuilder cache = new CacheSettingsBuilder();
 
         internal FluentConfiguration()
             : this(new Configuration())
-        {}
+        { }
 
         internal FluentConfiguration(Configuration cfg)
         {
             this.cfg = cfg;
+            ProxyFactoryFactory(DefaultProxyFactoryFactoryClassName);
         }
 
         internal Configuration Configuration
@@ -74,13 +85,120 @@ namespace FluentNHibernate.Cfg
         }
 
         /// <summary>
+        /// Configure caching.
+        /// </summary>
+        /// <example>
+        ///     Cache(x =>
+        ///     {
+        ///       x.UseQueryCache();
+        ///       x.UseMinimalPuts();
+        ///     });
+        /// </example>
+        /// <param name="cacheExpression">Closure for configuring caching</param>
+        /// <returns>Configuration builder</returns>
+        public FluentConfiguration Cache(Action<CacheSettingsBuilder> cacheExpression)
+        {
+            cacheExpression(cache);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the collectiontype.factory_class property.
+        /// NOTE: NHibernate 2.1 only
+        /// </summary>
+        /// <param name="collectionTypeFactoryClass">factory class</param>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration CollectionTypeFactory(string collectionTypeFactoryClass)
+        {
+            this.Configuration.SetProperty(CollectionTypeFactoryClassKey, collectionTypeFactoryClass);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the collectiontype.factory_class property.
+        /// NOTE: NHibernate 2.1 only
+        /// </summary>
+        /// <param name="collectionTypeFactoryClass">factory class</param>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration CollectionTypeFactory(Type collectionTypeFactoryClass)
+        {
+            return CollectionTypeFactory(collectionTypeFactoryClass.AssemblyQualifiedName);
+        }
+
+        /// <summary>
+        /// Sets the collectiontype.factory_class property.
+        /// NOTE: NHibernate 2.1 only
+        /// </summary>
+        /// <typeparam name="TCollectionTypeFactory">factory class</typeparam>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration CollectionTypeFactory<TCollectionTypeFactory>() where TCollectionTypeFactory : ICollectionTypeFactory
+        {
+            return CollectionTypeFactory(typeof(TCollectionTypeFactory));
+        }
+
+        /// <summary>
+        /// Sets the proxyfactory.factory_class property.
+        /// NOTE: NHibernate 2.1 only
+        /// </summary>
+        /// <param name="proxyFactoryFactoryClass">factory class</param>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration ProxyFactoryFactory(string proxyFactoryFactoryClass)
+        {
+            this.Configuration.SetProperty(ProxyFactoryFactoryClassKey, proxyFactoryFactoryClass);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the proxyfactory.factory_class property.
+        /// NOTE: NHibernate 2.1 only
+        /// </summary>
+        /// <param name="proxyFactoryFactory">factory class</param>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration ProxyFactoryFactory(Type proxyFactoryFactory)
+        {
+            return ProxyFactoryFactory(proxyFactoryFactory.AssemblyQualifiedName);
+        }
+
+        /// <summary>
+        /// Sets the proxyfactory.factory_class property.
+        /// NOTE: NHibernate 2.1 only
+        /// </summary>
+        /// <typeparam name="TProxyFactoryFactory">factory class</typeparam>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration ProxyFactoryFactory<TProxyFactoryFactory>() where TProxyFactoryFactory : IProxyFactoryFactory
+        {
+            return ProxyFactoryFactory(typeof(TProxyFactoryFactory));
+        }
+
+        /// <summary>
+        /// Sets the current_session_context_class property.
+        /// </summary>
+        /// <param name="currentSessionContextClass">current session context class</param>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration CurrentSessionContext(string currentSessionContextClass)
+        {
+            this.Configuration.SetProperty(CurrentSessionContextClassKey, currentSessionContextClass);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the current_session_context_class property.
+        /// </summary>
+        /// <typeparam name="TSessionContext">Implementation of ICurrentSessionContext to use</typeparam>
+        /// <returns>Configuration</returns>
+        public FluentConfiguration CurrentSessionContext<TSessionContext>() where TSessionContext : NHibernate.Context.ICurrentSessionContext
+        {
+            return CurrentSessionContext(typeof(TSessionContext).AssemblyQualifiedName);
+        }
+
+        /// <summary>
         /// Apply mappings to NHibernate
         /// </summary>
         /// <param name="mappings">Lambda used to apply mappings</param>
         /// <returns>Fluent configuration</returns>
         public FluentConfiguration Mappings(Action<MappingConfiguration> mappings)
         {
-            mappingsBuilder = mappings;
+            mappingsBuilders.Add(mappings);
             mappingsSet = true;
             return this;
         }
@@ -94,6 +212,7 @@ namespace FluentNHibernate.Cfg
         {
             if (config != null)
                 configAlterations.Add(config);
+
             return this;
         }
 
@@ -105,7 +224,7 @@ namespace FluentNHibernate.Cfg
         {
             try
             {
-				return BuildConfiguration()
+                return BuildConfiguration()
                     .BuildSessionFactory();
             }
             catch (Exception ex)
@@ -118,27 +237,30 @@ namespace FluentNHibernate.Cfg
         /// Verifies the configuration and populates the NHibernate Configuration instance.
         /// </summary>
         /// <returns>NHibernate Configuration instance</returns>
-		public Configuration BuildConfiguration()
-		{
-			try
-			{
-			    var mappingCfg = new MappingConfiguration(logger);
+        public Configuration BuildConfiguration()
+        {
+            try
+            {
+                var mappingCfg = new MappingConfiguration(logger);
 
-                if (mappingsBuilder != null)
-                    mappingsBuilder(mappingCfg);
+			    foreach (var builder in mappingsBuilders)
+			        builder(mappingCfg);
 
-				mappingCfg.Apply(Configuration);
+                mappingCfg.Apply(Configuration);
 
-				foreach (var configAlteration in configAlterations)
-					configAlteration(Configuration);
+                if (cache.IsDirty)
+                    Configuration.AddProperties(cache.Create());
 
-				return Configuration;
-			}
-			catch (Exception ex)
-			{
-				throw CreateConfigurationException(ex);
-			}
-		}
+                foreach (var configAlteration in configAlterations)
+                    configAlteration(Configuration);
+
+                return Configuration;
+            }
+            catch (Exception ex)
+            {
+                throw CreateConfigurationException(ex);
+            }
+        }
 
         /// <summary>
         /// Creates an exception based on the current state of the configuration.

@@ -29,27 +29,27 @@ namespace FluentNHibernate.Mapping
     /// <typeparam name="T">Entity type to map</typeparam>
     public class ClassMap<T> : ClasslikeMapBase<T>, IMappingProvider
     {
-        protected readonly AttributeStore<ClassMapping> attributes = new AttributeStore<ClassMapping>();
-        protected readonly IList<JoinMapping> joins = new List<JoinMapping>();
-        private readonly OptimisticLockBuilder<ClassMap<T>> optimisticLock;
+        readonly AttributeStore<ClassMapping> attributes;
+        private readonly MappingProviderStore providers;
+        readonly OptimisticLockBuilder<ClassMap<T>> optimisticLock;
 
-        protected IIdentityMappingProvider id;
-
-        private readonly IList<ImportPart> imports = new List<ImportPart>();
+        readonly IList<ImportPart> imports = new List<ImportPart>();
         private bool nextBool = true;
 
-        protected DiscriminatorPart discriminator;
-        protected IVersionMappingProvider version;
-        protected ICompositeIdMappingProvider compositeId;
-        protected INaturalIdMappingProvider naturalId;
         private readonly HibernateMappingPart hibernateMappingPart = new HibernateMappingPart();
         private readonly PolymorphismBuilder<ClassMap<T>> polymorphism;
         private SchemaActionBuilder<ClassMap<T>> schemaAction;
-        protected TuplizerMapping tuplizerMapping;
-        protected CacheMapping cache;
+        internal CacheMapping cache;
 
         public ClassMap()
+            : this(new AttributeStore<ClassMapping>(), new MappingProviderStore())
+        {}
+
+        protected ClassMap(AttributeStore<ClassMapping> attributes, MappingProviderStore providers)
+            : base(providers)
         {
+            this.attributes = attributes;
+            this.providers = providers;
             optimisticLock = new OptimisticLockBuilder<ClassMap<T>>(this, value => attributes.Set(x => x.OptimisticLock, value));
             polymorphism = new PolymorphismBuilder<ClassMap<T>>(this, value => attributes.Set(x => x.Polymorphism, value));
             schemaAction = new SchemaActionBuilder<ClassMap<T>>(this, value => attributes.Set(x => x.SchemaAction, value));
@@ -107,12 +107,14 @@ namespace FluentNHibernate.Mapping
         public virtual IdentityPart Id(Expression<Func<T, object>> memberExpression, string column)
         {
             var member = memberExpression.ToMember();
+#pragma warning disable 612,618
             var part = new IdentityPart(EntityType, member);
+#pragma warning restore 612,618
 
             if (column != null)
                 part.Column(column);
 
-            id = part;
+            providers.Id = part;
 
             return part;
         }
@@ -156,7 +158,7 @@ namespace FluentNHibernate.Mapping
                 part.Column(column);
             }
 
-            id = part;
+            providers.Id = part;
 
             return part;
         }
@@ -173,7 +175,7 @@ namespace FluentNHibernate.Mapping
         {
             var part = new NaturalIdPart<T>();
 
-            naturalId = part;
+            providers.NaturalId = part;
 
             return part;
         }
@@ -192,7 +194,7 @@ namespace FluentNHibernate.Mapping
         {
             var part = new CompositeIdentityPart<T>();
 
-            compositeId = part;
+            providers.CompositeId = part;
 
             return part;
         }
@@ -212,7 +214,7 @@ namespace FluentNHibernate.Mapping
         {
             var part = new CompositeIdentityPart<TId>(memberExpression.ToMember().Name);
 
-            compositeId = part;
+            providers.CompositeId = part;
 
             return part;
         }
@@ -236,7 +238,7 @@ namespace FluentNHibernate.Mapping
         {
             var versionPart = new VersionPart(typeof(T), property);
 
-            version = versionPart;
+            providers.Version = versionPart;
 
             return versionPart;
         }
@@ -252,9 +254,9 @@ namespace FluentNHibernate.Mapping
         /// <param name="baseClassDiscriminator">Default discriminator value</param>
         public virtual DiscriminatorPart DiscriminateSubClassesOnColumn<TDiscriminator>(string columnName, TDiscriminator baseClassDiscriminator)
         {
-            var part = new DiscriminatorPart(columnName, typeof(T), subclasses.Add, new TypeReference(typeof(TDiscriminator)));
+            var part = new DiscriminatorPart(columnName, typeof(T), providers.Subclasses.Add, new TypeReference(typeof(TDiscriminator)));
 
-            discriminator = part;
+            providers.Discriminator = part;
 
             attributes.Set(x => x.DiscriminatorValue, baseClassDiscriminator);
 
@@ -271,9 +273,9 @@ namespace FluentNHibernate.Mapping
         /// <param name="columnName">Discriminator column name</param>
         public virtual DiscriminatorPart DiscriminateSubClassesOnColumn<TDiscriminator>(string columnName)
         {
-            var part = new DiscriminatorPart(columnName, typeof(T), subclasses.Add, new TypeReference(typeof(TDiscriminator)));
+            var part = new DiscriminatorPart(columnName, typeof(T), providers.Subclasses.Add, new TypeReference(typeof(TDiscriminator)));
 
-            discriminator = part;
+            providers.Discriminator = part;
 
             return part;
         }
@@ -304,13 +306,13 @@ namespace FluentNHibernate.Mapping
         [Obsolete("Inline definitions of subclasses are depreciated. Please create a derived class from SubclassMap in the same way you do with ClassMap.")]
         public virtual void JoinedSubClass<TSubclass>(string keyColumn, Action<JoinedSubClassPart<TSubclass>> action) where TSubclass : T
         {
-            var subclass = new JoinedSubClassPart<TSubclass>();
+            var subclass = new JoinedSubClassPart<TSubclass>(keyColumn);
 
             subclass.KeyColumn(keyColumn);
 
             action(subclass);
 
-            subclasses[typeof(TSubclass)] = subclass;
+            providers.Subclasses[typeof(TSubclass)] = subclass;
         }
 
         /// <summary>
@@ -372,7 +374,7 @@ namespace FluentNHibernate.Mapping
 
             action(join);
 
-            joins.Add(((IJoinMappingProvider)join).GetJoinMapping());
+            providers.Joins.Add(join);
         }
 
         /// <summary>
@@ -548,11 +550,8 @@ namespace FluentNHibernate.Mapping
             attributes.Set(x => x.EntityName, entityName);
         }
 
-        /// <overloads>
-        /// Applies a filter to this entity given it's name.
-        /// </overloads>
         /// <summary>
-        /// Applies a filter to this entity given it's name.
+        /// Applies a filter to this entity given its name.
         /// </summary>
         /// <param name="name">The filter's name</param>
         /// <param name="condition">The condition to apply</param>
@@ -564,25 +563,19 @@ namespace FluentNHibernate.Mapping
             builder.Name(name);
             builder.Condition(condition);
             
-            filters.Add(new PassThroughMappingProvider(filterMapping));
+            providers.Filters.Add(new PassThroughMappingProvider(filterMapping));
             return this;
         }
 
-        /// <overloads>
-        /// Applies a filter to this entity given it's name.
-        /// </overloads>
         /// <summary>
-        /// Applies a filter to this entity given it's name.
+        /// Applies a filter to this entity given its name.
         /// </summary>
         /// <param name="name">The filter's name</param>
         public ClassMap<T> ApplyFilter(string name)
         {
-            return this.ApplyFilter(name, null);
+            return ApplyFilter(name, null);
         }
 
-        /// <overloads>
-        /// Applies a named filter to this entity.
-        /// </overloads>
         /// <summary>
         /// Applies a named filter to this entity.
         /// </summary>
@@ -593,11 +586,11 @@ namespace FluentNHibernate.Mapping
         /// </typeparam>
         public ClassMap<T> ApplyFilter<TFilter>(string condition) where TFilter : FilterDefinition, new()
         {
-            return this.ApplyFilter(new TFilter().Name, condition);
+            return ApplyFilter(new TFilter().Name, condition);
         }
 
         /// <summary>
-        /// Applies a named filter to this one-to-many.
+        /// Applies a named filter to this entity.
         /// </summary>
         /// <typeparam name="TFilter">
         /// The type of a <see cref="FilterDefinition"/> implementation
@@ -617,11 +610,13 @@ namespace FluentNHibernate.Mapping
         /// <param name="tuplizerType">Tuplizer type</param>
         public TuplizerPart Tuplizer(TuplizerMode mode, Type tuplizerType)
         {
-            tuplizerMapping = new TuplizerMapping();
-            tuplizerMapping.Mode = mode;
-            tuplizerMapping.Type = new TypeReference(tuplizerType);
+            providers.TuplizerMapping = new TuplizerMapping
+            {
+                Mode = mode,
+                Type = new TypeReference(tuplizerType)
+            };
 
-            return new TuplizerPart(tuplizerMapping)
+            return new TuplizerPart(providers.TuplizerMapping)
                 .Type(tuplizerType)
                 .Mode(mode);
         }
@@ -633,58 +628,58 @@ namespace FluentNHibernate.Mapping
             mapping.Type = typeof(T);
             mapping.Name = typeof(T).AssemblyQualifiedName;
 
-            foreach (var property in properties)
+            foreach (var property in providers.Properties)
                 mapping.AddProperty(property.GetPropertyMapping());
 
-            foreach (var component in components)
+            foreach (var component in providers.Components)
                 mapping.AddComponent(component.GetComponentMapping());
 
-            if (version != null)
-                mapping.Version = version.GetVersionMapping();
+            if (providers.Version != null)
+                mapping.Version = providers.Version.GetVersionMapping();
 
-            foreach (var oneToOne in oneToOnes)
+            foreach (var oneToOne in providers.OneToOnes)
                 mapping.AddOneToOne(oneToOne.GetOneToOneMapping());
 
-            foreach (var collection in collections)
+            foreach (var collection in providers.Collections)
                 mapping.AddCollection(collection.GetCollectionMapping());
 
-            foreach (var reference in references)
+            foreach (var reference in providers.References)
                 mapping.AddReference(reference.GetManyToOneMapping());
 
-            foreach (var any in anys)
+            foreach (var any in providers.Anys)
                 mapping.AddAny(any.GetAnyMapping());
 
-            foreach (var subclass in subclasses.Values)
+            foreach (var subclass in providers.Subclasses.Values)
                 mapping.AddSubclass(subclass.GetSubclassMapping());
 
-            foreach (var join in joins)
-                mapping.AddJoin(join);
+            foreach (var join in providers.Joins)
+                mapping.AddJoin(join.GetJoinMapping());
 
-            if (discriminator != null)
-                mapping.Discriminator = ((IDiscriminatorMappingProvider)discriminator).GetDiscriminatorMapping();
+            if (providers.Discriminator != null)
+                mapping.Discriminator = providers.Discriminator.GetDiscriminatorMapping();
 
             if (cache != null)
                 mapping.Cache = cache;
 
-            if (id != null)
-                mapping.Id = id.GetIdentityMapping();
+            if (providers.Id != null)
+                mapping.Id = providers.Id.GetIdentityMapping();
 
-            if (compositeId != null)
-                mapping.Id = compositeId.GetCompositeIdMapping();
+            if (providers.CompositeId != null)
+                mapping.Id = providers.CompositeId.GetCompositeIdMapping();
 
-            if (naturalId != null)
-                mapping.NaturalId = naturalId.GetNaturalIdMapping();
+            if (providers.NaturalId != null)
+                mapping.NaturalId = providers.NaturalId.GetNaturalIdMapping();
 
             if (!mapping.IsSpecified("TableName"))
                 mapping.SetDefaultValue(x => x.TableName, GetDefaultTableName());
 
-            foreach (var filter in filters)
+            foreach (var filter in providers.Filters)
                 mapping.AddFilter(filter.GetFilterMapping());
 
-            foreach (var storedProcedure in storedProcedures)
+            foreach (var storedProcedure in providers.StoredProcedures)
                 mapping.AddStoredProcedure(storedProcedure.GetStoredProcedureMapping());
 
-            mapping.Tuplizer = tuplizerMapping;
+            mapping.Tuplizer = providers.TuplizerMapping;
 
             return mapping;
         }
@@ -701,6 +696,7 @@ namespace FluentNHibernate.Mapping
 
         string GetDefaultTableName()
         {
+#pragma warning disable 612,618
             var tableName = EntityType.Name;
 
             if (EntityType.IsGenericType)
@@ -714,6 +710,7 @@ namespace FluentNHibernate.Mapping
                     tableName += argument.Name;
                 }
             }
+#pragma warning restore 612,618
 
             return "`" + tableName + "`";
         }

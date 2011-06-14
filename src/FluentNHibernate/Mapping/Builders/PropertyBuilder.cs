@@ -8,6 +8,7 @@ namespace FluentNHibernate.Mapping.Builders
 {
     public class PropertyBuilder
     {
+        private readonly AttributeStore<PropertyMapping> attributes = new AttributeStore<PropertyMapping>();
         private readonly AttributeStore<ColumnMapping> columnAttributes = new AttributeStore<ColumnMapping>();
 
         private bool nextBool = true;
@@ -16,7 +17,7 @@ namespace FluentNHibernate.Mapping.Builders
         public PropertyBuilder(PropertyMapping mapping, Type containingEntityType, Member member)
         {
             this.mapping = mapping;
-
+            
             InitialiseDefaults(containingEntityType, member);
         }
 
@@ -30,6 +31,18 @@ namespace FluentNHibernate.Mapping.Builders
 
             if (member.PropertyType.IsEnum() && member.PropertyType.IsNullable())
                 columnAttributes.SetDefault(x => x.NotNull, false);
+
+            SetDefaultAccess(member);
+        }
+
+        void SetDefaultAccess(Member member)
+        {
+            var resolvedAccess = MemberAccessResolver.Resolve(member);
+
+            if (resolvedAccess == Mapping.Access.Property || resolvedAccess == Mapping.Access.Unset)
+                return; // property is the default so we don't need to specify it
+
+            attributes.SetDefault(x => x.Access, resolvedAccess.ToString());
         }
 
         /// <summary>

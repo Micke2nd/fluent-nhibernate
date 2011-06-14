@@ -4,6 +4,7 @@ using System.Diagnostics;
 using FluentNHibernate.Mapping.Builders;
 using FluentNHibernate.Mapping.Providers;
 using FluentNHibernate.MappingModel;
+using FluentNHibernate.Utils;
 
 namespace FluentNHibernate.Mapping
 {
@@ -13,13 +14,21 @@ namespace FluentNHibernate.Mapping
     /// <typeparam name="T"></typeparam>
     public class JoinPart<T> : ClasslikeMapBase<T>, IJoinMappingProvider
     {
+        private readonly MappingProviderStore providers;
+        private readonly IList<string> columns = new List<string>();
         private readonly FetchTypeExpression<JoinPart<T>> fetch;
         private readonly AttributeStore<JoinMapping> attributes = new AttributeStore<JoinMapping>();
         private bool nextBool = true;
         readonly KeyMapping keyMapping;
 
         public JoinPart(string tableName)
+            : this(tableName, new MappingProviderStore())
+        {}
+
+        protected JoinPart(string tableName, MappingProviderStore providers)
+            : base(providers)
         {
+            this.providers = providers;
             fetch = new FetchTypeExpression<JoinPart<T>>(this, value => attributes.Set(x => x.Fetch, value));
 
             keyMapping = new KeyMapping { ContainingEntityType = typeof(T) };
@@ -45,6 +54,17 @@ namespace FluentNHibernate.Mapping
         public JoinPart<T> KeyColumn(string column)
         {
             Key(ke => ke.Column(column));
+            return this;
+        }
+
+        /// <summary>
+        /// Specify the key column name
+        /// </summary>
+        /// <param name="columnNames">Column names</param>
+        public JoinPart<T> KeyColumn(params string[] columnNames)
+        {
+            columns.Clear(); // only one supported currently
+            columnNames.Each(columns.Add);
             return this;
         }
 
@@ -134,17 +154,26 @@ namespace FluentNHibernate.Mapping
 
             mapping.ContainingEntityType = typeof(T);
 
-            foreach (var property in properties)
+            if (columns.Count == 0)
+                mapping.Key.AddDefaultColumn(new ColumnMapping { Name = typeof(T).Name + "_id" });
+            else
+                foreach (var column in columns)
+                    mapping.Key.AddColumn(new ColumnMapping { Name = column });
+
+            foreach (var property in providers.Properties)
                 mapping.AddProperty(property.GetPropertyMapping());
 
-            foreach (var component in components)
+            foreach (var component in providers.Components)
                 mapping.AddComponent(component.GetComponentMapping());
 
-            foreach (var reference in references)
+            foreach (var reference in providers.References)
                 mapping.AddReference(reference.GetManyToOneMapping());
 
-            foreach (var any in anys)
+            foreach (var any in providers.Anys)
                 mapping.AddAny(any.GetAnyMapping());
+
+            foreach (var collection in providers.Collections)
+                mapping.AddCollection(collection.GetCollectionMapping());
 
             return mapping;
         }

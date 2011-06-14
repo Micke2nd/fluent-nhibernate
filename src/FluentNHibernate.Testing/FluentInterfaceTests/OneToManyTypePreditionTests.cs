@@ -14,7 +14,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
             var mapping = MappingFor<OneToManyTarget>(class_map =>
                 class_map.HasMany(x => x.BagOfChildren));
 
-            mapping.Collections.Single().ShouldBeOfType<BagMapping>();
+            mapping.Collections.Single().Collection.ShouldEqual(Collection.Bag);
         }
 
         [Test]
@@ -23,7 +23,7 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
             var mapping = MappingFor<OneToManyTarget>(class_map =>
                 class_map.HasMany(x => x.SetOfChildren));
 
-            mapping.Collections.Single().ShouldBeOfType<SetMapping>();
+            mapping.Collections.Single().Collection.ShouldEqual(Collection.Set);
         }
 
         [Test]
@@ -31,8 +31,8 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         {
             var mapping = MappingFor<OneToManyTarget>(class_map =>
                 class_map.HasMany(x => x.HashSetOfChildren));
-         
-            mapping.Collections.Single().ShouldBeOfType<SetMapping>();
+
+            mapping.Collections.Single().Collection.ShouldEqual(Collection.Set);
         }
 
         [Test, Ignore]
@@ -40,8 +40,8 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         {
             var mapping = MappingFor<OneToManyTarget>(class_map =>
                 class_map.HasMany(x => x.ArrayOfChildren));
-            
-            mapping.Collections.Single().ShouldBeOfType<ArrayMapping>();
+
+            mapping.Collections.Single().Collection.ShouldEqual(Collection.Array);
         }
     }
 }

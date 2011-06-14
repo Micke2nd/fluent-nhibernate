@@ -472,7 +472,7 @@ namespace FluentNHibernate.Specs.FluentInterface
     public abstract class DictionarySpec
     {
         protected static ClassMapping mapping;
-        protected static MapMapping map;
+        protected static CollectionMapping map;
 
         protected static void mapping_for<T>(Action<ClassMap<T>> mapping_definition)
             where T : EntityBase
@@ -487,7 +487,7 @@ namespace FluentNHibernate.Specs.FluentInterface
             model.Add(classMap);
 
             mapping = model.BuildMappingFor<T>();
-            map = mapping.Collections.SingleOrDefault() as MapMapping;
+            map = mapping.Collections.SingleOrDefault();
         }
     }
 }

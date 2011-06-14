@@ -127,6 +127,46 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
         }
 
         [Test]
+        public void ElementColumnNameShouldntBeOverwritten()
+        {
+            Mapping(x => x.Children, x => x.Element("name"));
+
+            Convention(x => x.Element.Column("xxx"));
+
+            VerifyModel(x => x.Element.Columns.First().Name.ShouldEqual("name"));
+        }
+
+        [Test]
+        public void ElementTypeShouldntBeOverwrittenUsingGeneric()
+        {
+            Mapping(x => x.Children, x => x.Element("xxx", e => e.Type<string>()));
+
+            Convention(x => x.Element.Type<int>());
+
+            VerifyModel(x => x.Element.Type.GetUnderlyingSystemType().ShouldEqual(typeof(string)));
+        }
+
+        [Test]
+        public void ElementTypeShouldntBeOverwrittenUsingTypeOf()
+        {
+            Mapping(x => x.Children, x => x.Element("xxx", e => e.Type<string>()));
+
+            Convention(x => x.Element.Type(typeof(int)));
+
+            VerifyModel(x => x.Element.Type.GetUnderlyingSystemType().ShouldEqual(typeof(string)));
+        }
+
+        [Test]
+        public void ElementTypeShouldntBeOverwrittenUsingString()
+        {
+            Mapping(x => x.Children, x => x.Element("xxx", e => e.Type<string>()));
+
+            Convention(x => x.Element.Type(typeof(int).AssemblyQualifiedName));
+
+            VerifyModel(x => x.Element.Type.GetUnderlyingSystemType().ShouldEqual(typeof(string)));
+        }
+
+        [Test]
         public void ChildKeyColumnNameShouldntBeOverwritten()
         {
             Mapping(x => x.Children, x => x.ChildKeyColumn("name"));
@@ -149,11 +189,11 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
         [Test]
         public void OptimisticLockShouldntBeOverwritten()
         {
-            Mapping(x => x.Children, x => x.OptimisticLock.All());
+            Mapping(x => x.Children, x => x.OptimisticLock());
 
-            Convention(x => x.OptimisticLock.Dirty());
+            Convention(x => x.Not.OptimisticLock());
 
-            VerifyModel(x => x.OptimisticLock.ShouldEqual("all"));
+            VerifyModel(x => x.OptimisticLock.ShouldEqual(true));
         }
 
         [Test]
@@ -245,7 +285,7 @@ namespace FluentNHibernate.Testing.ConventionsTests.OverridingFluentInterface
             mappingType = typeof(ExampleInheritedClass);
         }
 
-        private void VerifyModel(Action<ICollectionMapping> modelVerification)
+        private void VerifyModel(Action<CollectionMapping> modelVerification)
         {
             model.Add(mapping);
 

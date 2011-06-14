@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
-using System.Reflection;
 using FluentNHibernate.Utils;
 using FluentNHibernate.Visitors;
 
@@ -21,7 +19,7 @@ namespace FluentNHibernate.MappingModel
         {
             visitor.ProcessDiscriminator(this);
 
-            columns.Each(visitor.Visit);
+            Columns.Each(visitor.Visit);
         }
 
         public bool Force
@@ -55,7 +53,7 @@ namespace FluentNHibernate.MappingModel
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
             return Equals(other.ContainingEntityType, ContainingEntityType) &&
-                other.columns.ContentEquals(columns) &&
+                other.Columns.ContentEquals(Columns) &&
                 Equals(other.attributes, attributes);
         }
 
@@ -71,7 +69,7 @@ namespace FluentNHibernate.MappingModel
         {
             unchecked
             {
-                return ((ContainingEntityType != null ? ContainingEntityType.GetHashCode() : 0) * 397) ^ ((columns != null ? columns.GetHashCode() : 0) * 397) ^ (attributes != null ? attributes.GetHashCode() : 0);
+                return ((ContainingEntityType != null ? ContainingEntityType.GetHashCode() : 0) * 397) ^ ((Columns != null ? Columns.GetHashCode() : 0) * 397) ^ (attributes != null ? attributes.GetHashCode() : 0);
             }
         }
     }

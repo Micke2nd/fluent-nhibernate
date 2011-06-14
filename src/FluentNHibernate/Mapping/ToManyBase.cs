@@ -17,16 +17,16 @@ namespace FluentNHibernate.Mapping
     {
         private readonly AccessStrategyBuilder<T> access;
         private readonly FetchTypeExpression<T> fetch;
-        private readonly OptimisticLockBuilder<T> optimisticLock;
         private readonly CollectionCascadeExpression<T> cascade;
         protected ICompositeElementMappingProvider componentMapping;
         protected bool nextBool = true;
 
-        protected readonly AttributeStore<ICollectionMapping> collectionAttributes = new AttributeStore<ICollectionMapping>();
+        protected readonly AttributeStore<CollectionMapping> collectionAttributes = new AttributeStore<CollectionMapping>();
         protected readonly KeyMapping keyMapping;
         protected ICollectionRelationshipMapping relationshipMapping;
+//        protected readonly AttributeStore<TRelationshipAttributes> relationshipAttributes = new AttributeStore<TRelationshipAttributes>();
         private readonly IList<FilterMapping> filters = new List<FilterMapping>();
-        private Func<AttributeStore, ICollectionMapping> collectionBuilder;
+        private Func<AttributeStore, CollectionMapping> collectionBuilder;
         protected IndexMapping indexMapping;
         protected Member member;
         private Type entity;
@@ -40,11 +40,11 @@ namespace FluentNHibernate.Mapping
             AsBag();
             access = new AccessStrategyBuilder<T>((T)this, value => collectionAttributes.Set(x => x.Access, value));
             fetch = new FetchTypeExpression<T>((T)this, value => collectionAttributes.Set(x => x.Fetch, value));
-            optimisticLock = new OptimisticLockBuilder<T>((T)this, value => collectionAttributes.Set(x => x.OptimisticLock, value));
             cascade = new CollectionCascadeExpression<T>((T)this, value => collectionAttributes.Set(x => x.Cascade, value));
 
-            SetDefaultCollectionType(type);
+            SetDefaultCollectionType();
             SetCustomCollectionType(type);
+            SetDefaultAccess();
 
             collectionAttributes.SetDefault(x => x.Name, member.Name);
 
@@ -130,7 +130,7 @@ namespace FluentNHibernate.Mapping
         /// </summary>
         public T AsSet()
         {
-            collectionBuilder = attrs => new SetMapping(attrs);
+            collectionBuilder = attrs => CollectionMapping.Set(attrs);
             return (T)this;
         }
 
@@ -140,7 +140,12 @@ namespace FluentNHibernate.Mapping
         /// <param name="sort">Sorting</param>
         public T AsSet(SortType sort)
         {
-            collectionBuilder = attrs => new SetMapping(attrs) { Sort = sort.ToString().ToLowerInvariant() };
+            collectionBuilder = attrs =>
+            {
+                var collection = CollectionMapping.Set(attrs);
+                collection.Sort = sort.ToLowerInvariantString();
+                return collection;
+            };
             return (T)this;
         }
 
@@ -150,7 +155,12 @@ namespace FluentNHibernate.Mapping
         /// <typeparam name="TComparer">Item comparer</typeparam>
         public T AsSet<TComparer>() where TComparer : IComparer<TChild>
         {
-            collectionBuilder = attrs => new SetMapping(attrs) { Sort = typeof(TComparer).AssemblyQualifiedName };
+            collectionBuilder = attrs =>
+            {
+                var collection = CollectionMapping.Set(attrs);
+                collection.Sort = typeof(TComparer).AssemblyQualifiedName;
+                return collection;
+            };
             return (T)this;
         }
 
@@ -159,7 +169,7 @@ namespace FluentNHibernate.Mapping
         /// </summary>
         public T AsBag()
         {
-            collectionBuilder = attrs => new BagMapping(attrs);
+            collectionBuilder = attrs => CollectionMapping.Bag(attrs);
             return (T)this;
         }
 
@@ -168,7 +178,7 @@ namespace FluentNHibernate.Mapping
         /// </summary>
         public T AsList()
         {
-            collectionBuilder = attrs => new ListMapping(attrs);
+            collectionBuilder = attrs => CollectionMapping.List(attrs);
             CreateIndexMapping(null);
 
             if (indexMapping.Columns.IsEmpty())
@@ -183,7 +193,7 @@ namespace FluentNHibernate.Mapping
         /// <param name="customIndexMapping">Index mapping</param>
         public T AsList(Action<IndexBuilder> customIndexMapping)
         {
-            collectionBuilder = attrs => new ListMapping(attrs);
+            collectionBuilder = attrs => CollectionMapping.List(attrs);
             CreateIndexMapping(customIndexMapping);
 
             if (indexMapping.Columns.IsEmpty())
@@ -210,7 +220,7 @@ namespace FluentNHibernate.Mapping
         /// <param name="customIndexMapping">Index mapping</param>
         public T AsArray<TIndex>(Expression<Func<TChild, TIndex>> indexSelector, Action<IndexBuilder> customIndexMapping)
         {
-            collectionBuilder = attrs => new ArrayMapping(attrs);
+            collectionBuilder = attrs => CollectionMapping.Array(attrs);
             return AsIndexedCollection(indexSelector, customIndexMapping);
         }
 
@@ -334,11 +344,13 @@ namespace FluentNHibernate.Mapping
         }
 
         /// <summary>
-        /// Specify the optimistic locking behaviour
+        /// Specifies whether this collection should be optimistically locked.
         /// </summary>
-        public OptimisticLockBuilder<T> OptimisticLock
+        public T OptimisticLock()
         {
-            get { return optimisticLock; }
+            collectionAttributes.Set(x => x.OptimisticLock, nextBool);
+            nextBool = true;
+            return (T)this;
         }
 
         /// <summary>
@@ -496,7 +508,7 @@ namespace FluentNHibernate.Mapping
         /// <param name="name">The filter's name</param>
         public T ApplyFilter(string name)
         {
-            return (T)this.ApplyFilter(name, null);
+            return ApplyFilter(name, null);
         }
 
         /// <overloads>
@@ -512,7 +524,7 @@ namespace FluentNHibernate.Mapping
         /// </typeparam>
         public T ApplyFilter<TFilter>(string condition) where TFilter : FilterDefinition, new()
         {
-            return this.ApplyFilter(new TFilter().Name, condition);
+            return ApplyFilter(new TFilter().Name, condition);
         }
 
         /// <summary>
@@ -524,13 +536,32 @@ namespace FluentNHibernate.Mapping
         /// </typeparam>
         public T ApplyFilter<TFilter>() where TFilter : FilterDefinition, new()
         {
-            return this.ApplyFilter<TFilter>(null);
+            return ApplyFilter<TFilter>(null);
         }
 
-        void SetDefaultCollectionType(Type type)
+        void SetDefaultCollectionType()
         {
-            if (type.Namespace == "Iesi.Collections.Generic" || type.Closes(typeof(HashSet<>)))
-                AsSet();
+            var collection = CollectionTypeResolver.Resolve(member);
+
+            switch (collection)
+            {
+                case Collection.Bag:
+                    AsBag();
+                    break;
+                case Collection.Set:
+                    AsSet();
+                    break;
+            }
+        }
+
+        void SetDefaultAccess()
+        {
+            var resolvedAccess = MemberAccessResolver.Resolve(member);
+
+            if (resolvedAccess == Mapping.Access.Property || resolvedAccess == Mapping.Access.Unset)
+                return; // property is the default so we don't need to specify it
+
+            collectionAttributes.SetDefault(x => x.Access, resolvedAccess.ToString());
         }
 
         void SetCustomCollectionType(Type type)
@@ -541,12 +572,12 @@ namespace FluentNHibernate.Mapping
             collectionAttributes.Set(x => x.CollectionType, new TypeReference(type));
         }
 
-        ICollectionMapping ICollectionMappingProvider.GetCollectionMapping()
+        CollectionMapping ICollectionMappingProvider.GetCollectionMapping()
         {
             return GetCollectionMapping();
         }
 
-        protected virtual ICollectionMapping GetCollectionMapping()
+        protected virtual CollectionMapping GetCollectionMapping()
         {
             var mapping = collectionBuilder(collectionAttributes.CloneInner());
 
@@ -571,8 +602,8 @@ namespace FluentNHibernate.Mapping
             }
 
             // HACK: Index only on list and map - shouldn't have to do this!
-            if (indexMapping != null && mapping is IIndexedCollectionMapping)
-                ((IIndexedCollectionMapping)mapping).Index = indexMapping;
+            if (mapping.Collection == Collection.Array || mapping.Collection == Collection.List || mapping.Collection == Collection.Map)
+                mapping.Index = indexMapping;
 
             if (elementMapping != null)
             {
@@ -581,7 +612,7 @@ namespace FluentNHibernate.Mapping
             }
 
             foreach (var filterMapping in filters)
-                mapping.Filters.Add(filterMapping);
+                mapping.AddFilter(filterMapping);
 
             return mapping;
         }
@@ -590,6 +621,11 @@ namespace FluentNHibernate.Mapping
         {
             if (member.IsMethod)
             {
+                Member backingField;
+
+                if (member.TryGetBackingField(out backingField))
+                    return backingField.Name;
+
                 // try to guess the backing field name (GetSomething -> something)
                 if (member.Name.StartsWith("Get"))
                 {

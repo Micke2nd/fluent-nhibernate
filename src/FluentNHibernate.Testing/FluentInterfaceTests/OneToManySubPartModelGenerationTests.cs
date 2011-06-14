@@ -23,33 +23,18 @@ namespace FluentNHibernate.Testing.FluentInterfaceTests
         [Test]
         public void ListShouldSetIndex()
         {
-            var mapping = MappingFor<OneToManyTarget>(class_map =>
-                class_map.HasMany(x => x.ListOfChildren)
-                    .AsList(ls =>
-                    {
-                        ls.Column("index-column");
-                        ls.Type<int>();
-                    }));
-
-            var collection = mapping.Collections.Single() as ListMapping;
-
-            collection.ShouldNotBeNull();
-            collection.Index.ShouldNotBeNull();
-            collection.Index.Type.ShouldEqual(new TypeReference(typeof(int)));
-            collection.Index.As<IndexMapping>().Columns.Count().ShouldEqual(1);
-        }
-
-        [Test]
-        public void MapShouldSetIndex()
-        {
-            var mapping = MappingFor<OneToManyTarget>(class_map =>
-                class_map.HasMany(x => x.MapOfValues));
-            var collection = mapping.Collections.Single() as MapMapping;
-
-            collection.ShouldNotBeNull();
-            collection.Index.ShouldBeOfType<IndexMapping>();
-            collection.Index.Type.ShouldEqual(new TypeReference(typeof(string)));
-            collection.Index.As<IndexMapping>().Columns.Count().ShouldEqual(1);
+            OneToMany(x => x.ListOfChildren)
+                .Mapping(m => m.AsList(x =>
+                {
+                    x.Column("index-column");
+                    x.Type<int>();
+                }))
+                .ModelShouldMatch(x =>
+                {
+                    x.Index.ShouldNotBeNull();
+                    x.Index.Columns.Count().ShouldEqual(1);
+                    ((IndexMapping)x.Index).Type.ShouldEqual(new TypeReference(typeof(int)));
+                });
         }
 
         [Test]

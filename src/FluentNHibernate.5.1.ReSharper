@@ -163,6 +163,7 @@
         <EventHandlerPatternShort>$event$Handler</EventHandlerPatternShort>
         <ExceptionName IsNull="False">
         </ExceptionName>
+        <OverrideDefaultSettings>True</OverrideDefaultSettings>
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="TypesAndNamespaces" />
         <PredefinedRule Inspect="True" Prefix="I" Suffix="" Style="AaBb" ElementKind="Interfaces" />
         <PredefinedRule Inspect="True" Prefix="T" Suffix="" Style="AaBb" ElementKind="TypeParameters" />
@@ -171,7 +172,7 @@
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="aaBb" ElementKind="LocalConstants" />
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="aaBb" ElementKind="Parameters" />
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="PublicFields" />
-        <PredefinedRule Inspect="True" Prefix="_" Suffix="" Style="aaBb" ElementKind="PrivateInstanceFields" />
+        <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="aaBb" ElementKind="PrivateInstanceFields" />
         <PredefinedRule Inspect="True" Prefix="_" Suffix="" Style="aaBb" ElementKind="PrivateStaticFields" />
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="Constants" />
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="PrivateConstants" />
@@ -179,6 +180,20 @@
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="PrivateStaticReadonly" />
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="EnumMember" />
         <PredefinedRule Inspect="True" Prefix="" Suffix="" Style="AaBb" ElementKind="Other" />
+        <UserRule Inspect="False" Prefix="" Suffix="" Style="AaBb" StaticnessKind="Static, Instance" AccessRight="Private, Protected, ProtectedInternal, Internal, Public" Description="">
+          <ElementKinds>
+            <Kind Name="TEST_TYPE" />
+            <Kind Name="TEST_MEMBER" />
+            <Kind Name="Machine.Specifications_Behavior" />
+            <Kind Name="Machine.Specifications_Context" />
+            <Kind Name="Machine.Specifications_ContextBase" />
+            <Kind Name="Machine.Specifications_Specification" />
+            <Kind Name="Machine.Specifications_SupportingField" />
+            <Kind Name="Machine.Specifications_Field" />
+            <Kind Name="Machine.Specifications_Constant" />
+            <Kind Name="Machine.Specifications_Local" />
+          </ElementKinds>
+        </UserRule>
       </Naming2>
     </CSharp>
     <VB>

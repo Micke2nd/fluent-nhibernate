@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using FluentNHibernate.MappingModel.ClassBased;
-using FluentNHibernate.MappingModel.Collections;
 using FluentNHibernate.Visitors;
 
 namespace FluentNHibernate.MappingModel
@@ -10,7 +9,7 @@ namespace FluentNHibernate.MappingModel
     internal class MappedMembers : IMappingBase, IHasMappedMembers
     {
         private readonly List<PropertyMapping> properties;
-        private readonly List<ICollectionMapping> collections;
+        private readonly List<Collections.CollectionMapping> collections;
         private readonly List<ManyToOneMapping> references;
         private readonly List<IComponentMapping> components;
         private readonly List<OneToOneMapping> oneToOnes;
@@ -22,7 +21,7 @@ namespace FluentNHibernate.MappingModel
         public MappedMembers()
         {
             properties = new List<PropertyMapping>();
-            collections = new List<ICollectionMapping>();
+            collections = new List<Collections.CollectionMapping>();
             references = new List<ManyToOneMapping>();
             components = new List<IComponentMapping>();
             oneToOnes = new List<OneToOneMapping>();
@@ -37,7 +36,7 @@ namespace FluentNHibernate.MappingModel
             get { return properties; }
         }
 
-        public IEnumerable<ICollectionMapping> Collections
+        public IEnumerable<Collections.CollectionMapping> Collections
         {
             get { return collections; }
         }
@@ -100,7 +99,7 @@ namespace FluentNHibernate.MappingModel
             properties.Add(mapping);
         }
 
-        public void AddCollection(ICollectionMapping collection)
+        public void AddCollection(Collections.CollectionMapping collection)
         {
             if (collections.Exists(x => x.Name == collection.Name))
                 throw new InvalidOperationException("Tried to add collection '" + collection.Name + "' when already added.");
@@ -108,7 +107,7 @@ namespace FluentNHibernate.MappingModel
             collections.Add(collection);
         }
 
-        public void AddOrReplaceCollection(ICollectionMapping mapping)
+        public void AddOrReplaceCollection(Collections.CollectionMapping mapping)
         {
             collections.RemoveAll(x => x.Name == mapping.Name);
             collections.Add(mapping);

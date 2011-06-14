@@ -1,14 +1,14 @@
 using System;
 using System.Diagnostics;
-using System.Reflection;
 using FluentNHibernate.Conventions.Inspections;
-using NHibernate.Persister.Entity;
 
 namespace FluentNHibernate.Conventions.Instances
 {
     public interface ICollectionInstance : ICollectionInspector
     {
         new IKeyInstance Key { get; }
+        new IIndexInstanceBase Index { get; }
+        new IElementInstance Element { get; }
         new IRelationshipInstance Relationship { get; }
         void Table(string tableName);
         new void Name(string name);
@@ -18,13 +18,20 @@ namespace FluentNHibernate.Conventions.Instances
         new void BatchSize(int batchSize);
         void ReadOnly();
 
+        void AsArray();
+        void AsBag();
+        void AsList();
+        void AsMap();
+        void AsSet();
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         ICollectionInstance Not { get; }
         new IAccessInstance Access { get; }
         new ICacheInstance Cache { get; }
         new ICollectionCascadeInstance Cascade { get; }
         new IFetchInstance Fetch { get; }
-        new IOptimisticLockInstance OptimisticLock { get; }
+
+        new void OptimisticLock();
         new void Check(string constraint);
         new void CollectionType<T>();
         new void CollectionType(string type);
@@ -34,6 +41,7 @@ namespace FluentNHibernate.Conventions.Instances
         new void Persister<T>();
         new void Where(string whereClause);
         new void OrderBy(string orderBy);
+        new void Sort(string sort);
         void Subselect(string subselect);
     }
 }

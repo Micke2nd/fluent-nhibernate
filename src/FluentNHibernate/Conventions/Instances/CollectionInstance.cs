@@ -1,20 +1,21 @@
 using System;
 using System.Diagnostics;
-using System.Reflection;
 using FluentNHibernate.Conventions.Inspections;
 using FluentNHibernate.Mapping;
 using FluentNHibernate.MappingModel;
 using FluentNHibernate.MappingModel.Collections;
-using NHibernate.Persister.Entity;
 
 namespace FluentNHibernate.Conventions.Instances
 {
-    public class CollectionInstance : CollectionInspector, ICollectionInstance
+#pragma warning disable 612,618
+    public class CollectionInstance : CollectionInspector, ICollectionInstance,
+        IArrayInstance, IBagInstance, IListInstance, IMapInstance, ISetInstance
+#pragma warning restore 612,618
     {
-        private readonly ICollectionMapping mapping;
+        readonly CollectionMapping mapping;
         protected bool nextBool = true;
 
-        public CollectionInstance(ICollectionMapping mapping)
+        public CollectionInstance(CollectionMapping mapping)
             : base(mapping)
         {
             this.mapping = mapping;
@@ -55,16 +56,11 @@ namespace FluentNHibernate.Conventions.Instances
             }
         }
 
-        public new IOptimisticLockInstance OptimisticLock
+        public new void OptimisticLock()
         {
-            get
-            {
-                return new OptimisticLockInstance(value =>
-                {
-                    if (!mapping.IsSpecified("OptimisticLock"))
-                        mapping.OptimisticLock = value;
-                });
-            }
+            if (!mapping.IsSpecified("OptimisticLock"))
+                mapping.OptimisticLock = nextBool;
+            nextBool = true;
         }
 
         public new void Check(string constraint)
@@ -117,10 +113,35 @@ namespace FluentNHibernate.Conventions.Instances
                 mapping.Where = whereClause;
         }
 
+        public new IIndexInstanceBase Index
+        {
+            get
+            {
+                if (mapping.Index == null)
+                    return new IndexInstance(new IndexMapping());
+
+                if (mapping.Index is IndexMapping)
+                    return new IndexInstance(mapping.Index as IndexMapping);
+
+                //if (mapping.Index is IndexManyToManyMapping)
+                //    return new IndexManyToManyInstance(mapping.Index as IndexManyToManyMapping);
+
+                throw new InvalidOperationException("This IIndexMapping is not a valid type for inspecting");
+            }
+        }
+
         public new void OrderBy(string orderBy)
         {
             if (!mapping.IsSpecified("OrderBy"))
                 mapping.OrderBy = orderBy;
+        }
+
+        public new void Sort(string sort)
+        {
+            if (mapping.IsSpecified("Sort"))
+                return;
+
+            mapping.Sort = sort;
         }
 
         public void Subselect(string subselect)
@@ -174,6 +195,31 @@ namespace FluentNHibernate.Conventions.Instances
             nextBool = true;
         }
 
+        void ICollectionInstance.AsArray()
+        {
+            mapping.Collection = Collection.Array;
+        }
+
+        void ICollectionInstance.AsBag()
+        {
+            mapping.Collection = Collection.Bag;
+        }
+
+        void ICollectionInstance.AsList()
+        {
+            mapping.Collection = Collection.List;
+        }
+
+        void ICollectionInstance.AsMap()
+        {
+            mapping.Collection = Collection.Map;
+        }
+
+        void ICollectionInstance.AsSet()
+        {
+            mapping.Collection = Collection.Set;
+        }
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public ICollectionInstance Not
         {
@@ -196,6 +242,14 @@ namespace FluentNHibernate.Conventions.Instances
             }
         }
 
+        public void SetOrderBy(string orderBy)
+        {
+            if (mapping.IsSpecified("OrderBy"))
+                return;
+
+            mapping.OrderBy = orderBy;
+        }
+
         public new IAccessInstance Access
         {
             get
@@ -211,6 +265,41 @@ namespace FluentNHibernate.Conventions.Instances
         public new IKeyInstance Key
         {
             get { return new KeyInstance(mapping.Key); }
+        }
+
+        public new IElementInstance Element
+        {
+            get
+            {
+                if (!mapping.IsSpecified("Element"))
+                    mapping.Element = new ElementMapping();
+                
+                return new ElementInstance(mapping.Element);
+            }
+        }
+
+        public void ApplyFilter(string name, string condition)
+        {
+            mapping.AddFilter(new FilterMapping
+            {
+                Name = name,
+                Condition = condition
+            });
+        }
+
+        public void ApplyFilter(string name)
+        {
+            ApplyFilter(name, null);
+        }
+
+        public void ApplyFilter<TFilter>(string condition) where TFilter : FilterDefinition, new()
+        {
+            ApplyFilter(new TFilter().Name, condition);
+        }
+
+        public void ApplyFilter<TFilter>() where TFilter : FilterDefinition, new()
+        {
+            ApplyFilter<TFilter>(null);
         }
     }
 }

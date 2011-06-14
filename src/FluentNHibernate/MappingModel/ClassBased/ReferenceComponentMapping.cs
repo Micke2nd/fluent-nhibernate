@@ -32,6 +32,9 @@ namespace FluentNHibernate.MappingModel.ClassBased
         public void AcceptVisitor(IMappingModelVisitor visitor)
         {
             visitor.ProcessComponent(this);
+
+            if (mergedComponent != null)
+                mergedComponent.AcceptVisitor(visitor);
         }
 
         public bool IsSpecified(string name)
@@ -56,7 +59,7 @@ namespace FluentNHibernate.MappingModel.ClassBased
             get { return mergedComponent.References; }
         }
 
-        public IEnumerable<ICollectionMapping> Collections
+        public IEnumerable<Collections.CollectionMapping> Collections
         {
             get { return mergedComponent.Collections; }
         }
@@ -86,7 +89,7 @@ namespace FluentNHibernate.MappingModel.ClassBased
             mergedComponent.AddProperty(property);
         }
 
-        public void AddCollection(ICollectionMapping collection)
+        public void AddCollection(Collections.CollectionMapping collection)
         {
             mergedComponent.AddCollection(collection);
         }

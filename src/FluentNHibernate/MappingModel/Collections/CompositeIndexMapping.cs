@@ -39,6 +39,11 @@ namespace FluentNHibernate.MappingModel.Collections
             set { attributes.Set(x => x.Type, value); }
         }
 
+        public IDefaultableEnumerable<ColumnMapping> Columns
+        {
+            get { throw new NotImplementedException(); }
+        }
+
         public IEnumerable<KeyPropertyMapping> Properties
         {
             get { return properties; }

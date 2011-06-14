@@ -8,7 +8,7 @@ namespace FluentNHibernate.Mapping.Builders
 {
     public class MapBuilder<TKey, TValue>
     {
-        readonly MapMapping mapping;
+        readonly CollectionMapping mapping;
         KeyMapping key;
         IndexMapping index;
         CompositeIndexMapping compositeIndex;
@@ -17,7 +17,7 @@ namespace FluentNHibernate.Mapping.Builders
         ElementMapping element;
         bool nextBool = true;
 
-        public MapBuilder(MapMapping mapping, Member member)
+        public MapBuilder(CollectionMapping mapping, Member member)
         {
             this.mapping = mapping;
 
@@ -29,6 +29,7 @@ namespace FluentNHibernate.Mapping.Builders
             mapping.Member = member;
             mapping.SetDefaultValue(x => x.Name, member.Name);
             mapping.SetDefaultValue(x => x.TableName, mapping.ContainingEntityType.Name + member.Name);
+            mapping.SetDefaultValue(x => x.ChildType, typeof(TValue));
 
             mapping.Key = key = new KeyMapping();
             key.AddDefaultColumn(new ColumnMapping { Name = mapping.ContainingEntityType.Name + "_id" });
@@ -307,7 +308,7 @@ namespace FluentNHibernate.Mapping.Builders
         /// <returns>Builder</returns>
         public MapBuilder<TKey, TValue> OptimisticLock()
         {
-            mapping.OptimisticLock = nextBool.ToString();
+            mapping.OptimisticLock = nextBool;
             nextBool = true;
             return this;
         }
@@ -352,7 +353,7 @@ namespace FluentNHibernate.Mapping.Builders
             builder.Name(name);
             builder.Condition(condition);
 
-            mapping.Filters.Add(filterMapping);
+            mapping.AddFilter(filterMapping);
             return this;
         }
 
